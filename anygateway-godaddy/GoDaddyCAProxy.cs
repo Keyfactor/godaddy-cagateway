@@ -16,6 +16,9 @@ namespace CAProxy.Generic.GoDaddy
 {
     public class GoDaddyCAProxy : LoggingClientBase, ICAConnector
     {
+        private string ApiKey { get; set; }
+        private string ApiUrl { get; set; }
+
         public void Synchronize(ICertificateDataReader certificateDataReader, BlockingCollection<CertificateRecord> blockingBuffer, CertificateAuthoritySyncInfo certificateAuthoritySyncInfo, CancellationToken cancelToken, string logicalName)
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
@@ -61,11 +64,13 @@ namespace CAProxy.Generic.GoDaddy
         public EnrollmentResult Enroll(string csr, string subject, Dictionary<string, string[]> san, EnrollmentProductInfo productInfo, PKIConstants.X509.RequestFormat requestFormat, RequestUtilities.EnrollmentType enrollmentType)
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
+            Uri apiEndpoint = new Uri(ApiUrl);
             //productInfo.ProductID; //This is the mapped product ID from the AnyGateway Template Mapping
             //productInfo.ProductParameters;// this is a collection of string key/value pairs from the Template mapping. Can be used to determine required fields?
 
             //TODO: Create new Enrollment object for Go Daddy based on template configuration. Send request to correct endpoint based on enrollmentType
-            
+
             switch (enrollmentType)
             {
                 case RequestUtilities.EnrollmentType.New:
@@ -74,12 +79,14 @@ namespace CAProxy.Generic.GoDaddy
                     break;
                 case RequestUtilities.EnrollmentType.Reissue:
                     break;
+                default:
+                    return new EnrollmentResult { Status = 30, StatusMessage = $"Unsupported EnrollmentType: {enrollmentType}" };
             }
             Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
             return new EnrollmentResult { 
                 CARequestID="",
                 Certificate="",
-                Status=20,
+                Status=20,//SUCCESS - 30 for Failure
                 StatusMessage=""
             };
             
@@ -87,12 +94,25 @@ namespace CAProxy.Generic.GoDaddy
 
         public CAConnectorCertificate GetSingleRecord(string caRequestID)
         {
-            throw new NotImplementedException();
+            //TODO: Populate with Data from Go dadyd for a specific certificate
+            return new CAConnectorCertificate() {
+                CARequestID = "",
+                Certificate = "",
+                CSR = "",
+                ResolutionDate = null,
+                RevocationDate = null,
+                RevocationReason = null,
+                Status = 20,
+                SubmissionDate = DateTime.Now
+            };
         }
-
+                
         public void Initialize(ICAConnectorConfigProvider configProvider)
         {
-            throw new NotImplementedException();
+            //Setup instance properties from Configuration File
+            //TODO: Should the Key portion of the API secrect come from somewhere else?
+            ApiKey = $"sso-key {configProvider.CAConnectionData["API_KEY"] as string}";
+            ApiUrl = configProvider.CAConnectionData["API_URL"] as string;
         }
 
         public int Revoke(string caRequestID, string hexSerialNumber, uint revocationReason)
@@ -102,17 +122,33 @@ namespace CAProxy.Generic.GoDaddy
 
         public void Ping()
         {
-            throw new NotImplementedException();
+            
         }
 
         public void ValidateCAConnectionInfo(Dictionary<string, object> connectionInfo)
         {
-            throw new NotImplementedException();
+            List<string> errors = new List<string>();
+            if (!connectionInfo.ContainsKey("API_KEY"))
+            {
+                errors.Add($"API_KEY is not found! Ensure CAConnection contains an entry for API_KEY");
+            }
+            if (!connectionInfo.ContainsKey("URL"))
+            {
+                errors.Add($"URL is not found! Ensure CAConnection contains an entry for URL");
+            }
+
+            if (errors.Any())
+            {
+                Logger.Error($"The following errors occured while validating CA configuration:");
+                Logger.Error($"{String.Join(Environment.NewLine, errors)}");
+                throw new Exception("CAConnection contains invalid configuration.");
+            }
+            
         }
 
         public void ValidateProductInfo(EnrollmentProductInfo productInfo, Dictionary<string, object> connectionInfo)
         {
-            throw new NotImplementedException();
+            
         }
 
         #region Not Implemented
