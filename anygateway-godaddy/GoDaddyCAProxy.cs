@@ -86,7 +86,7 @@ namespace CAProxy.Generic.GoDaddy
             return new EnrollmentResult { 
                 CARequestID="",
                 Certificate="",
-                Status=20,//SUCCESS - 30 for Failure
+                Status=20,//SUCCESS - 30 for Failure, //TODO: Pending status call
                 StatusMessage=""
             };
             
