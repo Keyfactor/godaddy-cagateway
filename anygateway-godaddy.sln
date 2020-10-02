@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anygateway-godaddy", "anygateway-godaddy\anygateway-godaddy.csproj", "{29E36505-9A60-4C16-89A9-4F23E4D3E3DE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDaddy", "anygateway-godaddy\GoDaddy.csproj", "{29E36505-9A60-4C16-89A9-4F23E4D3E3DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

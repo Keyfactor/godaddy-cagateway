@@ -12,12 +12,32 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CAProxy.Generic.GoDaddy
+namespace Keyfactor.AnyGateway.GoDaddy
 {
     public class GoDaddyCAProxy : LoggingClientBase, ICAConnector
     {
         private string ApiKey { get; set; }
         private string ApiUrl { get; set; }
+
+        #region Interface Methods
+        public void Initialize(ICAConnectorConfigProvider configProvider)
+        {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
+                Logger.Debug($"{configEntry.Key}: {configEntry.Value}");
+
+            ApiKey = configProvider.CAConnectionData["SSO_KEY"].ToString();
+            ApiUrl = configProvider.CAConnectionData["URL"].ToString();
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+        }
+
+        public void Ping()
+        {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+        }
 
         public void Synchronize(ICertificateDataReader certificateDataReader, BlockingCollection<CertificateRecord> blockingBuffer, CertificateAuthoritySyncInfo certificateAuthoritySyncInfo, CancellationToken cancelToken, string logicalName)
         {
@@ -106,23 +126,10 @@ namespace CAProxy.Generic.GoDaddy
                 SubmissionDate = DateTime.Now
             };
         }
-                
-        public void Initialize(ICAConnectorConfigProvider configProvider)
-        {
-            //Setup instance properties from Configuration File
-            //TODO: Should the Key portion of the API secrect come from somewhere else?
-            ApiKey = $"sso-key {configProvider.CAConnectionData["API_KEY"] as string}";
-            ApiUrl = configProvider.CAConnectionData["API_URL"] as string;
-        }
 
         public int Revoke(string caRequestID, string hexSerialNumber, uint revocationReason)
         {
             throw new NotImplementedException();
-        }
-
-        public void Ping()
-        {
-            
         }
 
         public void ValidateCAConnectionInfo(Dictionary<string, object> connectionInfo)
@@ -165,7 +172,7 @@ namespace CAProxy.Generic.GoDaddy
 
         #endregion
     }
-
+    #endregion
 
     public class MockUpClient
     {

@@ -74,11 +74,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GoDaddyCAProxy.cs" />
+    <Compile Include="Models\POSTCertificatesV1DV.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="API\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
