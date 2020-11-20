@@ -6,14 +6,22 @@ using System.Threading.Tasks;
 
 namespace Keyfactor.AnyGateway.GoDaddy.Models
 {
-    public class POSTCertificatesV1DV
+    public class POSTCertificatesV1DVRequest
     {
+        private const string BEGIN_CSR_DELIM = "-----BEGIN CERTIFICATE REQUEST-----\r\n";
+        private const string END_CSR_DELIM = "\r\n-----END CERTIFICATE REQUEST-----";
+
         public ContactInfo contact { get; set; }
         public string csr { get; set; }
         public int period { get; set; }
-        public string productType { get { return "DV_SSL"; } }
+        public string productType { get; set; }
         public string rootType { get { return "GODADDY_SHA_2"; } }
 
+        public void SetCSR(string csrString)
+        {
+            csr = csrString.StartsWith(BEGIN_CSR_DELIM, StringComparison.OrdinalIgnoreCase) ? csrString : BEGIN_CSR_DELIM + csrString;
+            csr = csr.EndsWith(END_CSR_DELIM, StringComparison.OrdinalIgnoreCase) ? csr : csr + END_CSR_DELIM;
+        }
     }
 
     public class ContactInfo
@@ -22,5 +30,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.Models
         public string nameFirst { get; set; }
         public string nameLast { get; set; }
         public string phone { get; set; }
+    }
+
+    public class POSTCertificatesV1DVResponse
+    {
+        public string certificateId { get; set; }
     }
 }

@@ -1,186 +1,55 @@
-﻿using Newtonsoft.Json;
+﻿using CSS.Common.Logging;
+using CSS.PKI;
+using Keyfactor.AnyGateway.GoDaddy.Models;
+using Newtonsoft.Json;
 using RestSharp;
-using GoDaddy.Models;
+using System;
 
-namespace GoDaddy
+namespace Keyfactor.AnyGateway.GoDaddy.API
 {
-    class APIProcessor
+    class APIProcessor : LoggingClientBase
     {
-        private string URL;
-        private string AUTH;
+        private string ApiUrl { get; set; }
+        private string ApiKey { get; set; }
+        private string ShopperId { get; set; }
 
-        public APIProcessor(string url, string auth)
+        public APIProcessor(string apiUrl, string apiKey, string shopperId)
         {
-            URL = url;
-            AUTH = auth;
+            ApiUrl = apiUrl;
+            ApiKey = apiKey;
+            ShopperId = shopperId;
         }
 
-        //private string GetDomainByName(string domainName)
-        //{
-            //string API = "/v1/domains/available?";
-
-            //HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(URL + API + domainName);
-            //request.Headers.Add("Authorization", AUTH);
-
-            //HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-            //StreamReader reader = new StreamReader(response.GetResponseStream());
-            //return reader.ReadToEnd();
-        //}
-
-        public string EnrollCSR(string csr, string cn)
+        public string EnrollCSR(string csr, POSTCertificatesV1DVRequest requestBody)
         {
             string rtnMessage = string.Empty;
 
             string RESOURCE = "v1/certificates";
-
-            RestClient client = new RestClient(URL);
             RestRequest request = new RestRequest(RESOURCE, Method.POST);
-            request.AddHeader("Authorization", AUTH);
 
-            POSTCertificatesV1DV body = new POSTCertificatesV1DV();
-
-            //body.commonName = cn;
-            body.csr = csr;
-
-            body.contact = new ContactInfo();
-            body.contact.email = "lee.fine@keyfactor.com";
-            body.contact.nameFirst = "bob";
-            body.contact.nameLast = "smith";
-            body.contact.phone = "555 555 5555";
-
-            body.period = 1;
-
-            request.AddJsonBody(body);
-
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
+            request.AddJsonBody(requestBody);
+            return SubmitRequest(request);
         }
 
-
-        public string ValidateCSR(string csr)
-        {
-            string rtnMessage = string.Empty;
-
-            string RESOURCE = "v1/certificates/validate";
-
-            RestClient client = new RestClient(URL);
-            RestRequest request = new RestRequest(RESOURCE, Method.POST);
-            request.AddHeader("Authorization", AUTH);
-
-            POSTCertificatesV1DV body = new POSTCertificatesV1DV();
-
-            body.csr = csr;
-
-            body.contact = new ContactInfo();
-            body.contact.email = "lee.fine@keyfactor.com";
-            body.contact.nameFirst = "bob";
-            body.contact.nameLast = "smith";
-            body.contact.phone = "555 555 5555";
-
-            body.period = 2;
-
-            request.AddJsonBody(body);
-
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
-        }
 
         public string GetCertificates(string customerId)
         {
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v2/customers/{customerId}/certificates";
-
-            RestClient client = new RestClient(URL);
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
 
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
+            return SubmitRequest(request);
         }
-
-
+        
         public string GetCertificate(string certificateId)
         {
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}";
-
-            RestClient client = new RestClient(URL);
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
 
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
+            return SubmitRequest(request);
         }
 
         public string DownloadCertificate(string certificateId)
@@ -188,49 +57,106 @@ namespace GoDaddy
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}/download";
-
-            RestClient client = new RestClient(URL);
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
 
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
+            return SubmitRequest(request);
         }
-
-
-        public string RevokeCertificate(string certificateId, POSTCertificateRevoke.REASON reason)
+        
+        public void RevokeCertificate(string certificateId, POSTCertificateRevokeRequest.REASON reason)
         {
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}/revoke";
-
-            RestClient client = new RestClient(URL);
             RestRequest request = new RestRequest(RESOURCE, Method.POST);
-            request.AddHeader("Authorization", AUTH);
 
-            POSTCertificateRevoke body = new POSTCertificateRevoke();
+            POSTCertificateRevokeRequest body = new POSTCertificateRevokeRequest();
             body.reason = reason.ToString();
 
             request.AddJsonBody(body);
+            SubmitRequest(request);
+        }
 
-            IRestResponse response = client.Execute(request);
+        public string GetCustomerId()
+        {
+            string rtnMessage = string.Empty;
+
+            string RESOURCE = $"v1/shoppers/{ShopperId}?includes=customerId";
+            RestRequest request = new RestRequest(RESOURCE, Method.GET);
+
+            return SubmitRequest(request);
+        }
+
+        public static int MapReturnStatus(CertificateStatusEnum status)
+        {
+            PKIConstants.Microsoft.RequestDisposition returnStatus = PKIConstants.Microsoft.RequestDisposition.UNKNOWN;
+
+            switch (status)
+            {
+                case CertificateStatusEnum.DENIED:
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.DENIED;
+                    break;
+                case CertificateStatusEnum.EXPIRED:
+                case CertificateStatusEnum.CURRENT:
+                case CertificateStatusEnum.ISSUED:
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.ISSUED;
+                    break;
+                case CertificateStatusEnum.PENDING_ISSUANCE:
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.PENDING;
+                    break;
+                case CertificateStatusEnum.REVOKED:
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.REVOKED;
+                    break;
+                default:
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.FAILED;
+                    break;
+            }
+
+            return Convert.ToInt32(returnStatus);
+        }
+
+        public static POSTCertificateRevokeRequest.REASON MapRevokeReason(uint reason)
+        {
+            POSTCertificateRevokeRequest.REASON returnReason = POSTCertificateRevokeRequest.REASON.PRIVILEGE_WITHDRAWN;
+
+            switch (reason)
+            {
+                case 1:
+                    returnReason = POSTCertificateRevokeRequest.REASON.KEY_COMPROMISE;
+                    break;
+                case 3:
+                    returnReason = POSTCertificateRevokeRequest.REASON.AFFILIATION_CHANGED;
+                    break;
+                case 4:
+                    returnReason = POSTCertificateRevokeRequest.REASON.SUPERSEDED;
+                    break;
+                case 5:
+                    returnReason = POSTCertificateRevokeRequest.REASON.CESSATION_OF_OPERATION;
+                    break;
+            }
+
+            return returnReason;
+        }
+
+
+        #region Private Methods
+        private string SubmitRequest(RestRequest request)
+        {
+            string rtnMessage;
+            IRestResponse response;
+
+            RestClient client = new RestClient(ApiUrl);
+            request.AddHeader("Authorization", ApiKey);
+
+            try
+            {
+                response = client.Execute(request);
+            }
+            catch (Exception ex)
+            {
+                string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}");
+                Logger.Error(exceptionMessage);
+                throw new GoDaddyException(exceptionMessage);
+            }
 
             if (response.StatusCode != System.Net.HttpStatusCode.OK &&
                 response.StatusCode != System.Net.HttpStatusCode.Accepted &&
@@ -246,10 +172,17 @@ namespace GoDaddy
                 {
                     rtnMessage = response.Content;
                 }
+
+                string exceptionMessage = $"Error processing {request.Resource}: {rtnMessage}";
+                Logger.Error(exceptionMessage);
+                throw new GoDaddyException(exceptionMessage);
             }
+            else
+                rtnMessage = response.Content;
 
-            return response.Content;
+            return rtnMessage;
         }
+        #endregion
 
 
 
@@ -267,103 +200,99 @@ namespace GoDaddy
 
 
 
+        //public string GetCertificateActions(string certificateId)
+        //{
+        //    string rtnMessage = string.Empty;
+
+        //    string RESOURCE = $"v1/certificates/{certificateId}/actions";
+
+        //    RestClient client = new RestClient(URL);
+        //    RestRequest request = new RestRequest(RESOURCE, Method.GET);
+        //    request.AddHeader("Authorization", AUTH);
+
+        //    IRestResponse response = client.Execute(request);
+
+        //    if (response.StatusCode != System.Net.HttpStatusCode.OK &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Accepted &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Created &&
+        //        response.StatusCode != System.Net.HttpStatusCode.NoContent)
+        //    {
+        //        try
+        //        {
+        //            APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
+        //            rtnMessage = $"{error.code}: {error.message}";
+        //        }
+        //        catch (JsonReaderException ex)
+        //        {
+        //            rtnMessage = response.Content;
+        //        }
+        //    }
+
+        //    return response.Content;
+        //}
+
+        //public string GetShopper(string shopperId)
+        //{
+        //    string rtnMessage = string.Empty;
+
+        //    string RESOURCE = $"v1/shoppers/{shopperId}?includes=customerId";
+
+        //    RestClient client = new RestClient(URL);
+        //    RestRequest request = new RestRequest(RESOURCE, Method.GET);
+        //    request.AddHeader("Authorization", AUTH);
+
+        //    IRestResponse response = client.Execute(request);
+
+        //    if (response.StatusCode != System.Net.HttpStatusCode.OK &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Accepted &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Created &&
+        //        response.StatusCode != System.Net.HttpStatusCode.NoContent)
+        //    {   
+        //        try
+        //        {
+        //            APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
+        //            rtnMessage = $"{error.code}: {error.message}";
+        //        }
+        //        catch (JsonReaderException ex)
+        //        {
+        //            rtnMessage = response.Content;
+        //        }
+        //    }
+
+        //    return response.Content;
+        //}
 
 
+        //public string GetDomains()
+        //{
+        //    string rtnMessage = string.Empty;
 
+        //    string RESOURCE = $"v1/domains";
 
-        public string GetCertificateActions(string certificateId)
-        {
-            string rtnMessage = string.Empty;
+        //    RestClient client = new RestClient(URL);
+        //    RestRequest request = new RestRequest(RESOURCE, Method.GET);
+        //    request.AddHeader("Authorization", AUTH);
+        //    request.AddHeader("X-Shopper-Id", "305145420");
 
-            string RESOURCE = $"v1/certificates/{certificateId}/actions";
+        //    IRestResponse response = client.Execute(request);
 
-            RestClient client = new RestClient(URL);
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
+        //    if (response.StatusCode != System.Net.HttpStatusCode.OK &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Accepted &&
+        //        response.StatusCode != System.Net.HttpStatusCode.Created &&
+        //        response.StatusCode != System.Net.HttpStatusCode.NoContent)
+        //    {
+        //        try
+        //        {
+        //            APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
+        //            rtnMessage = $"{error.code}: {error.message}";
+        //        }
+        //        catch (JsonReaderException ex)
+        //        {
+        //            rtnMessage = response.Content;
+        //        }
+        //    }
 
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
-        }
-
-        public string GetShopper(string shopperId)
-        {
-            string rtnMessage = string.Empty;
-
-            string RESOURCE = $"v1/shoppers/{shopperId}?includes=customerId";
-
-            RestClient client = new RestClient(URL);
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
-
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {   
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
-        }
-
-
-        public string GetDomains()
-        {
-            string rtnMessage = string.Empty;
-
-            string RESOURCE = $"v1/domains";
-
-            RestClient client = new RestClient(URL);
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
-            request.AddHeader("Authorization", AUTH);
-            request.AddHeader("X-Shopper-Id", "305145420");
-
-            IRestResponse response = client.Execute(request);
-
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    rtnMessage = response.Content;
-                }
-            }
-
-            return response.Content;
-        }
+        //    return response.Content;
+        //}
     }
 }
