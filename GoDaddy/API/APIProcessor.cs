@@ -32,11 +32,11 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
         }
 
 
-        public string GetCertificates(string customerId)
+        public string GetCertificates(string customerId, int pageNumber, int pageSize)
         {
             string rtnMessage = string.Empty;
 
-            string RESOURCE = $"v2/customers/{customerId}/certificates";
+            string RESOURCE = $"v2/customers/{customerId}/certificates?offset={pageNumber.ToString()}&limit={pageSize.ToString()}";
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
             return SubmitRequest(request);

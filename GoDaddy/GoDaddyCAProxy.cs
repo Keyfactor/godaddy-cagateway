@@ -20,19 +20,21 @@ namespace Keyfactor.AnyGateway.GoDaddy
     public class GoDaddyCAProxy : CAProxy.AnyGateway.BaseCAConnector
     {
         private APIProcessor _api { get; set; }
+        private int _syncPageSize { get; set; }
 
         #region Interface Methods
         public override void Initialize(ICAConnectorConfigProvider configProvider)
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+
             foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
                 Logger.Debug($"{configEntry.Key}: {configEntry.Value}");
 
-            //TODO: Validate configuration properties
-
+            //TODO - validate config items
             string apiUrl = configProvider.CAConnectionData["ApiUrl"].ToString();
             string apiKey = configProvider.CAConnectionData["ApiKey"].ToString();
             string shopperId = configProvider.CAConnectionData["ShopperId"].ToString();
+            _syncPageSize = Convert.ToInt32(configProvider.CAConnectionData["SyncPageSize"]);
 
             _api = new APIProcessor(apiUrl, apiKey, shopperId);
 
@@ -90,28 +92,38 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
             //TODO Try/Catch
             string customerId = JsonConvert.DeserializeObject<GETShopperResponse>(_api.GetCustomerId()).customerId;
-            GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId));
 
-            foreach(CertificateDetails certificate in certificates.certificates)
+            int pageNumber = 1;
+            bool wasLastPage = false;
+
+            do
             {
-                string issuedCert = JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId)).pems.certificate;
-                CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
-                if (!Enum.TryParse(certificate.status, out certStatus))
-                    certStatus = CertificateStatusEnum.CANCELED;
+                GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
 
-                blockingBuffer.Add(new CAConnectorCertificate
+                foreach (CertificateDetails certificate in certificates.certificates)
                 {
-                    CARequestID = certificate.certificateId,
-                    Certificate = issuedCert,
-                    CSR = string.Empty,
-                    ResolutionDate = certificate.completedAt,
-                    RevocationDate = certificate.revokedAt,
-                    RevocationReason = null,
-                    Status = APIProcessor.MapReturnStatus(certStatus),
-                    SubmissionDate = certificate.createdAt,
-                    ProductID = certificate.type
-                });
-            }
+                    string issuedCert = JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId)).pems.certificate;
+                    CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
+                    if (!Enum.TryParse(certificate.status, out certStatus))
+                        certStatus = CertificateStatusEnum.CANCELED;
+
+                    blockingBuffer.Add(new CAConnectorCertificate
+                    {
+                        CARequestID = certificate.certificateId,
+                        Certificate = issuedCert,
+                        CSR = string.Empty,
+                        ResolutionDate = certificate.completedAt,
+                        RevocationDate = certificate.revokedAt,
+                        RevocationReason = null,
+                        Status = APIProcessor.MapReturnStatus(certStatus),
+                        SubmissionDate = certificate.createdAt,
+                        ProductID = certificate.type
+                    });
+                }
+
+                wasLastPage = certificates.pagination.previous == certificates.pagination.last;
+                pageNumber++;
+            } while (!wasLastPage);
 
             ////TODO: Lee create GoDaddy Client to Async populate the blocking collection
             ////Task.Run(async() => await MethodToPopulateBc(bc,cancelToken);
