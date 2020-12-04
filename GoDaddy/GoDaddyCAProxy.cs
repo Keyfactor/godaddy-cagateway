@@ -21,6 +21,8 @@ namespace Keyfactor.AnyGateway.GoDaddy
     {
         private APIProcessor _api { get; set; }
         private int _syncPageSize { get; set; }
+        private int _enrollmentRetries { get; set; }
+        private int _secondsBetweenEnrollmentRetries { get; set; }
 
         #region Interface Methods
         public override void Initialize(ICAConnectorConfigProvider configProvider)
@@ -28,13 +30,22 @@ namespace Keyfactor.AnyGateway.GoDaddy
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
 
             foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
-                Logger.Debug($"{configEntry.Key}: {configEntry.Value}");
+                Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
 
-            //TODO - validate config items
+            string[][] connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
+                                                         new string[] { "ApiKey", "string" },
+                                                         new string[] { "ShopperId", "string" },
+                                                         new string[] { "SyncPageSize", "int" },
+                                                         new string[] { "EnrollmentRetries", "int" },
+                                                         new string[] { "SecondsBetweenEnrollmentRetries", "int" } };
+            ValidateParameters<object>(configProvider.CAConnectionData, connectionKeys);
+
             string apiUrl = configProvider.CAConnectionData["ApiUrl"].ToString();
             string apiKey = configProvider.CAConnectionData["ApiKey"].ToString();
             string shopperId = configProvider.CAConnectionData["ShopperId"].ToString();
             _syncPageSize = Convert.ToInt32(configProvider.CAConnectionData["SyncPageSize"]);
+            _enrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["EnrollmentRetries"]);
+            _secondsBetweenEnrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"]);
 
             _api = new APIProcessor(apiUrl, apiKey, shopperId);
 
@@ -90,7 +101,6 @@ namespace Keyfactor.AnyGateway.GoDaddy
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
 
-            //TODO Try/Catch
             string customerId = JsonConvert.DeserializeObject<GETShopperResponse>(_api.GetCustomerId()).customerId;
 
             int pageNumber = 1;
@@ -124,38 +134,6 @@ namespace Keyfactor.AnyGateway.GoDaddy
                 wasLastPage = certificates.pagination.previous == certificates.pagination.last;
                 pageNumber++;
             } while (!wasLastPage);
-
-            ////TODO: Lee create GoDaddy Client to Async populate the blocking collection
-            ////Task.Run(async() => await MethodToPopulateBc(bc,cancelToken);
-            //MockUpClient client = new MockUpClient();
-
-            //Task readCertsFromCA = Task.Run(() => MockUpClient.PopulateCertificateList(certsFromGoDaddy, cancelToken));
-
-            ////TODO: Update cert variable with Go Daddy Certificate Response Model
-            //string cert;
-            //while (!certsFromGoDaddy.IsCompleted)
-            //{
-            //    if (readCertsFromCA.IsFaulted)
-            //    {
-            //        throw readCertsFromCA.Exception.Flatten();
-            //    }
-
-            //    //Process Certs. Task could be a long running task depending on CA Cert Count. Begin taking certs from queue being populated by task
-            //    //TODO: Ensure out parametere matches Go Daddy Certificate model
-            //    if (certsFromGoDaddy.TryTake(out cert, 10,cancelToken))
-            //    {
-            //        blockingBuffer.Add(new CAConnectorCertificate { 
-            //            CARequestID="",
-            //            Certificate="",
-            //            CSR="",
-            //            ResolutionDate=null,
-            //            RevocationDate=null,
-            //            RevocationReason=null,
-            //            Status=20,
-            //            SubmissionDate=DateTime.Now
-            //        });
-            //    }
-            //}
             
             blockingBuffer.CompleteAdding();
 
@@ -192,6 +170,13 @@ namespace Keyfactor.AnyGateway.GoDaddy
             EnrollmentResult result = new EnrollmentResult();
             //TODO Implement other GoDaddy certificate types
 
+            string[][] parameterKeys = new string[][] { new string[] { "Email", "string" },
+                                                         new string[] { "FirstName", "string" },
+                                                         new string[] { "LastName", "string" },
+                                                         new string[] { "Phone", "string" },
+                                                         new string[] { "CertificatePeriodInYears", "int" } };
+            ValidateParameters<string>(productInfo.ProductParameters, parameterKeys);
+
             POSTCertificatesV1DVRequest certRequest = new POSTCertificatesV1DVRequest();
             certRequest.contact = new ContactInfo();
             certRequest.contact.email = productInfo.ProductParameters["Email"];
@@ -200,29 +185,35 @@ namespace Keyfactor.AnyGateway.GoDaddy
             certRequest.contact.phone = productInfo.ProductParameters["Phone"];
             certRequest.SetCSR(csr);
             
-            //TODO validate int for period
             certRequest.period = Convert.ToInt32(productInfo.ProductParameters["CertificatePeriodInYears"]);
             certRequest.productType = productInfo.ProductID;
             //TODO - allow assignment of root type
             //certRequest.rootType = productInfo.ProductParameters["RootType"];
 
-            //TODO - try/catch
-            string response = _api.EnrollCSR(csr, certRequest);
+            string response;
+            try
+            {
+                response = _api.EnrollCSR(csr, certRequest);
+            }
+            catch (Exception ex)
+            {
+                return new EnrollmentResult { Status = 30, StatusMessage = $"Error attempting to enroll certificate {subject}: {ex.Message}." };
+            }
             POSTCertificatesV1DVResponse dvCertificate = JsonConvert.DeserializeObject<POSTCertificatesV1DVResponse>(response);
 
-            //TODO validate retries and time between retries
-            //TODO encapsulate into one method for getting cert details and downloading the cert
-            int certificateRetries = Convert.ToInt32(productInfo.ProductParameters["CertificateRetries"]);
-            int secondsBetweenCertificateRetries = Convert.ToInt32(productInfo.ProductParameters["SecondsBetweenCertificateRetries"]);
-
             CertificateStatusEnum certStatus = CertificateStatusEnum.PENDING_ISSUANCE;
-            for(int i = 0; i < certificateRetries; i++)
+            for(int i = 0; i < _enrollmentRetries; i++)
             {
-                GETCertificateDetailsResponse certResponse = JsonConvert.DeserializeObject<GETCertificateDetailsResponse>(_api.GetCertificate(dvCertificate.certificateId));
-                Enum.TryParse(certResponse.status, out certStatus);
-                if (certStatus == CertificateStatusEnum.ISSUED)
-                    break;
-                Thread.Sleep(secondsBetweenCertificateRetries * 1000);
+                try
+                {
+                    GETCertificateDetailsResponse certResponse = JsonConvert.DeserializeObject<GETCertificateDetailsResponse>(_api.GetCertificate(dvCertificate.certificateId));
+                    Enum.TryParse(certResponse.status, out certStatus);
+                    if (certStatus == CertificateStatusEnum.ISSUED)
+                        break;
+                }
+                catch (Exception) { }
+
+                Thread.Sleep(_secondsBetweenEnrollmentRetries * 1000);
             }
 
             string pemCertificate = certStatus == CertificateStatusEnum.ISSUED ? JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(dvCertificate.certificateId)).pems.certificate : string.Empty;
@@ -268,8 +259,14 @@ namespace Keyfactor.AnyGateway.GoDaddy
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
 
-            //TODO - try/catch
-            _api.RevokeCertificate(caRequestID, APIProcessor.MapRevokeReason(revocationReason));
+            try
+            {
+                _api.RevokeCertificate(caRequestID, APIProcessor.MapRevokeReason(revocationReason));
+            }
+            catch (Exception ex)
+            {
+                return Convert.ToInt32(PKIConstants.Microsoft.RequestDisposition.FAILED);
+            }
 
             Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
             
@@ -285,41 +282,30 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
         #region Not Implemented
         #endregion
-    }
-    #endregion
+        #endregion
 
-    public class MockUpClient
-    {
-        //Mock up of what it looks like to populate the blocking collection from a task
-        public static void PopulateCertificateList(BlockingCollection<string> bc, CancellationToken ct)
+
+        #region Private Methods
+        private void ValidateParameters<T>(Dictionary<string, T> connectionData, string[][] keysToValidate)
         {
-            string certModel;
-            int itemsProcessed = 0;
-            int totalItems = 100; //TODO: Get from Response
-            do
-            { 
-                try
-                {
-                    certModel = "Parsed from JSON Response";
+            List<string> errors = new List<string>();
 
-                    if (bc.TryAdd(certModel, 10, ct))
-                    {
-                        itemsProcessed++;   
-                    }
-                    else
-                    {
-                        //adding to the queue was blocked.  Try again
-                    }
-                }
-                catch (OperationCanceledException)
+            foreach (string[] connectionKey in keysToValidate)
+            {
+                if (!connectionData.ContainsKey(connectionKey[0]))
+                    errors.Add($"CAConnection configuration value {connectionKey} not found.");
+                else if (connectionKey[1] == "int")
                 {
-                    //Operation was canceld
-                    bc.CompleteAdding();
-                    break;
+                    int value;
+                    bool isIntValue = int.TryParse(connectionData[connectionKey[0]].ToString(), out value);
+                    if (!isIntValue)
+                        errors.Add($"CAConnection configuration value {connectionKey} must contain an integer.  Found {connectionData[connectionKey[0]]}");
                 }
-            } while (itemsProcessed < totalItems);
-            bc.CompleteAdding();
+            }
+
+            if (errors.Count > 0)
+                throw new GoDaddyException(string.Join(System.Environment.NewLine, errors.ToArray()));
         }
+        #endregion
     }
-
 }
