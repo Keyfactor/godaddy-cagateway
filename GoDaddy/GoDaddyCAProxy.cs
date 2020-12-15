@@ -20,77 +20,59 @@ namespace Keyfactor.AnyGateway.GoDaddy
     public class GoDaddyCAProxy : CAProxy.AnyGateway.BaseCAConnector
     {
         private APIProcessor _api { get; set; }
+        private string _rootType { get; set; }
         private int _syncPageSize { get; set; }
         private int _enrollmentRetries { get; set; }
         private int _secondsBetweenEnrollmentRetries { get; set; }
+        private string[][] _connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
+                                                         new string[] { "ApiKey", "string" },
+                                                         new string[] { "ShopperId", "string" },
+                                                         new string[] { "RootType", "string" },
+                                                         new string[] { "SyncPageSize", "int" },
+                                                         new string[] { "EnrollmentRetries", "int" },
+                                                         new string[] { "SecondsBetweenEnrollmentRetries", "int" } };
 
         #region Interface Methods
         public override void Initialize(ICAConnectorConfigProvider configProvider)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
                 Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
-
-            string[][] connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
-                                                         new string[] { "ApiKey", "string" },
-                                                         new string[] { "ShopperId", "string" },
-                                                         new string[] { "SyncPageSize", "int" },
-                                                         new string[] { "EnrollmentRetries", "int" },
-                                                         new string[] { "SecondsBetweenEnrollmentRetries", "int" } };
-            ValidateParameters<object>(configProvider.CAConnectionData, connectionKeys);
+            ValidateParameters<object>(configProvider.CAConnectionData, _connectionKeys);
 
             string apiUrl = configProvider.CAConnectionData["ApiUrl"].ToString();
             string apiKey = configProvider.CAConnectionData["ApiKey"].ToString();
             string shopperId = configProvider.CAConnectionData["ShopperId"].ToString();
+            _rootType = configProvider.CAConnectionData["RootType"].ToString();
             _syncPageSize = Convert.ToInt32(configProvider.CAConnectionData["SyncPageSize"]);
             _enrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["EnrollmentRetries"]);
             _secondsBetweenEnrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"]);
 
             _api = new APIProcessor(apiUrl, apiKey, shopperId);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
         public override void Ping()
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
         public override void ValidateCAConnectionInfo(Dictionary<string, object> connectionInfo)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            List<string> errors = new List<string>();
-            if (!connectionInfo.ContainsKey("ApiUrl"))
-            {
-                errors.Add($"ApiUrl is not found! Ensure CAConnection contains an entry for ApiUrl");
-            }
-            if (!connectionInfo.ContainsKey("ApiKey"))
-            {
-                errors.Add($"ApiKey is not found! Ensure CAConnection contains an entry for ApiKey");
-            }
-            if (!connectionInfo.ContainsKey("ShopperId"))
-            {
-                errors.Add($"ShopperId is not found! Ensure CAConnection contains an entry for ShopperId");
-            }
+            ValidateParameters<object>(connectionInfo, _connectionKeys);
 
-            if (errors.Any())
-            {
-                Logger.Error($"The following errors occured while validating CA configuration:");
-                Logger.Error($"{String.Join(Environment.NewLine, errors)}");
-                throw new Exception("CAConnection contains invalid configuration.");
-            }
-
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
-
         [Obsolete]
         public override void Synchronize(ICertificateDataReader certificateDataReader, BlockingCollection<CertificateRecord> blockingBuffer, CertificateAuthoritySyncInfo certificateAuthoritySyncInfo, CancellationToken cancelToken, string logicalName)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
@@ -99,7 +81,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
         public override void Synchronize(ICertificateDataReader certificateDataReader, BlockingCollection<CAConnectorCertificate> blockingBuffer, CertificateAuthoritySyncInfo certificateAuthoritySyncInfo, CancellationToken cancelToken)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             string customerId = JsonConvert.DeserializeObject<GETShopperResponse>(_api.GetCustomerId()).customerId;
 
@@ -109,26 +91,31 @@ namespace Keyfactor.AnyGateway.GoDaddy
             do
             {
                 GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
-
+                
                 foreach (CertificateDetails certificate in certificates.certificates)
                 {
-                    string issuedCert = JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId)).pems.certificate;
-                    CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
-                    if (!Enum.TryParse(certificate.status, out certStatus))
-                        certStatus = CertificateStatusEnum.CANCELED;
-
-                    blockingBuffer.Add(new CAConnectorCertificate
+                    Thread.Sleep(1000);
+                    try
                     {
-                        CARequestID = certificate.certificateId,
-                        Certificate = issuedCert,
-                        CSR = string.Empty,
-                        ResolutionDate = certificate.completedAt,
-                        RevocationDate = certificate.revokedAt,
-                        RevocationReason = null,
-                        Status = APIProcessor.MapReturnStatus(certStatus),
-                        SubmissionDate = certificate.createdAt,
-                        ProductID = certificate.type
-                    });
+                        string issuedCert = JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId)).pems.certificate;
+                        CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
+                        if (!Enum.TryParse(certificate.status, out certStatus))
+                            certStatus = CertificateStatusEnum.CANCELED;
+
+                        blockingBuffer.Add(new CAConnectorCertificate
+                        {
+                            CARequestID = certificate.certificateId,
+                            Certificate = issuedCert,
+                            CSR = string.Empty,
+                            ResolutionDate = certificate.completedAt,
+                            RevocationDate = certificate.revokedAt,
+                            RevocationReason = null,
+                            Status = APIProcessor.MapReturnStatus(certStatus),
+                            SubmissionDate = certificate.createdAt,
+                            ProductID = certificate.type
+                        });
+                    }
+                    catch (GoDaddyException) { }
                 }
 
                 wasLastPage = certificates.pagination.previous == certificates.pagination.last;
@@ -143,7 +130,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
         [Obsolete]
         public override EnrollmentResult Enroll(string csr, string subject, Dictionary<string, string[]> san, EnrollmentProductInfo productInfo, PKIConstants.X509.RequestFormat requestFormat, RequestUtilities.EnrollmentType enrollmentType)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
@@ -152,8 +139,11 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
         public override EnrollmentResult Enroll(ICertificateDataReader certificateDataReader, string csr, string subject, Dictionary<string, string[]> san, EnrollmentProductInfo productInfo, PKIConstants.X509.RequestFormat requestFormat, RequestUtilities.EnrollmentType enrollmentType)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
-            
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
+            foreach (KeyValuePair<string, string> configEntry in productInfo.ProductParameters)
+                Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
+
             //TODO - build this out for new/renew/reissue use cases
             switch (enrollmentType)
             {
@@ -168,7 +158,6 @@ namespace Keyfactor.AnyGateway.GoDaddy
             }
 
             EnrollmentResult result = new EnrollmentResult();
-            //TODO Implement other GoDaddy certificate types
 
             string[][] parameterKeys = new string[][] { new string[] { "Email", "string" },
                                                          new string[] { "FirstName", "string" },
@@ -187,8 +176,16 @@ namespace Keyfactor.AnyGateway.GoDaddy
             
             certRequest.period = Convert.ToInt32(productInfo.ProductParameters["CertificatePeriodInYears"]);
             certRequest.productType = productInfo.ProductID;
-            //TODO - allow assignment of root type
-            //certRequest.rootType = productInfo.ProductParameters["RootType"];
+            certRequest.rootType = _rootType;
+            certRequest.slotSize = productInfo.ProductParameters.Keys.Contains("SlotSize") ? productInfo.ProductParameters["SlotSize"] : string.Empty;
+
+            List<string> sans = new List<string>();
+            foreach(string[] sanValues in san.Values)
+            {
+                foreach (string sanValue in sanValues)
+                    sans.Add(sanValue);
+            }
+            certRequest.subjectAlternativeNames = sans.ToArray();
 
             string response;
             try
@@ -218,7 +215,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
             string pemCertificate = certStatus == CertificateStatusEnum.ISSUED ? JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(dvCertificate.certificateId)).pems.certificate : string.Empty;
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
             return new EnrollmentResult { 
                 CARequestID = dvCertificate.certificateId,
@@ -230,7 +227,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
         public override CAConnectorCertificate GetSingleRecord(string caRequestID)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             CertificateStatusEnum certStatus = CertificateStatusEnum.PENDING_ISSUANCE;
                 
@@ -241,7 +238,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
             if (certStatus == CertificateStatusEnum.ISSUED || certStatus == CertificateStatusEnum.REVOKED || certStatus == CertificateStatusEnum.EXPIRED)
                 issuedCert = JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(caRequestID)).pems.certificate;
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
             return new CAConnectorCertificate() {
                 CARequestID = caRequestID,
@@ -257,7 +254,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
 
         public override int Revoke(string caRequestID, string hexSerialNumber, uint revocationReason)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
             try
             {
@@ -268,20 +265,18 @@ namespace Keyfactor.AnyGateway.GoDaddy
                 return Convert.ToInt32(PKIConstants.Microsoft.RequestDisposition.FAILED);
             }
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
             
             return Convert.ToInt32(PKIConstants.Microsoft.RequestDisposition.REVOKED);
         }
 
         public override void ValidateProductInfo(EnrollmentProductInfo productInfo, Dictionary<string, object> connectionInfo)
         {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Trace);
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
-        #region Not Implemented
-        #endregion
         #endregion
 
 

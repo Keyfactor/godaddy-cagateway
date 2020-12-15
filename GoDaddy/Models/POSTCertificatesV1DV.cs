@@ -15,7 +15,9 @@ namespace Keyfactor.AnyGateway.GoDaddy.Models
         public string csr { get; set; }
         public int period { get; set; }
         public string productType { get; set; }
-        public string rootType { get { return "GODADDY_SHA_2"; } }
+        public string rootType { get; set; }
+        public string slotSize { get; set; }
+        public string[] subjectAlternativeNames { get; set; }
 
         public void SetCSR(string csrString)
         {

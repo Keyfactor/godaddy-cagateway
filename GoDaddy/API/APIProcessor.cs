@@ -15,55 +15,78 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 
         public APIProcessor(string apiUrl, string apiKey, string shopperId)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             ApiUrl = apiUrl;
             ApiKey = apiKey;
             ShopperId = shopperId;
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
         public string EnrollCSR(string csr, POSTCertificatesV1DVRequest requestBody)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+            
             string rtnMessage = string.Empty;
 
             string RESOURCE = "v1/certificates";
             RestRequest request = new RestRequest(RESOURCE, Method.POST);
 
             request.AddJsonBody(requestBody);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+
             return SubmitRequest(request);
         }
 
 
         public string GetCertificates(string customerId, int pageNumber, int pageSize)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v2/customers/{customerId}/certificates?offset={pageNumber.ToString()}&limit={pageSize.ToString()}";
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+
             return SubmitRequest(request);
         }
-        
+
         public string GetCertificate(string certificateId)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}";
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
             return SubmitRequest(request);
         }
 
         public string DownloadCertificate(string certificateId)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}/download";
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
             return SubmitRequest(request);
         }
         
         public void RevokeCertificate(string certificateId, POSTCertificateRevokeRequest.REASON reason)
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/certificates/{certificateId}/revoke";
@@ -74,14 +97,20 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 
             request.AddJsonBody(body);
             SubmitRequest(request);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
         public string GetCustomerId()
         {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
             string rtnMessage = string.Empty;
 
             string RESOURCE = $"v1/shoppers/{ShopperId}?includes=customerId";
             RestRequest request = new RestRequest(RESOURCE, Method.GET);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
             return SubmitRequest(request);
         }
@@ -141,7 +170,11 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
         #region Private Methods
         private string SubmitRequest(RestRequest request)
         {
-            string rtnMessage;
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+            Logger.Trace($"Request Resource: {request.Resource}");
+            Logger.Trace($"Request Method: {request.Method.ToString()}");
+            Logger.Trace($"Request Body: {(request.Body == null ? string.Empty : request.Body.Value.ToString())}");
+
             IRestResponse response;
 
             RestClient client = new RestClient(ApiUrl);
@@ -163,24 +196,27 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
                 response.StatusCode != System.Net.HttpStatusCode.Created &&
                 response.StatusCode != System.Net.HttpStatusCode.NoContent)
             {
+                string errorMessage;
+
                 try
                 {
                     APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    rtnMessage = $"{error.code}: {error.message}";
+                    errorMessage = $"{error.code}: {error.message}";
                 }
                 catch (JsonReaderException ex)
                 {
-                    rtnMessage = response.Content;
+                    errorMessage = response.Content;
                 }
 
-                string exceptionMessage = $"Error processing {request.Resource}: {rtnMessage}";
+                string exceptionMessage = $"Error processing {request.Resource}: {errorMessage}";
                 Logger.Error(exceptionMessage);
                 throw new GoDaddyException(exceptionMessage);
             }
-            else
-                rtnMessage = response.Content;
 
-            return rtnMessage;
+            Logger.Trace($"API Result: {response.Content}");
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+
+            return response.Content;
         }
         #endregion
     }
