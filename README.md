@@ -3,6 +3,7 @@ GoDaddy is a domain registrar, web hosting company, and most relevant here, a pu
 - Sync certificates Issued from the CA
 - Request new certificates from the CA
 - Revoke certificates directly from Keyfactor Command
+- Certificate Renewal **is not yet implemented**
 
 
 
@@ -16,9 +17,17 @@ GoDaddy supports the following certificate products:
 - Organization Validated SSL With SANs (UCC_OV_SSL)
 - Extended Validation SSL (EV_SSL)
 - Extended Validation Wildcard SSL (EV_WILDCARD_SSL)
-- DExtended Validation SSL With SANs (UCC_EV_SSL)
+- Extended Validation SSL With SANs (UCC_EV_SSL)
 
-Currently only the domain validated products are supported in the GoDaddy AnyGateway.
+Currently only the **domain validated** products are supported in the GoDaddy AnyGateway.
+
+
+
+# GoDaddy Resources
+
+- [GoDaddy Portal](https://ae.godaddy.com/)
+- [GoDaddy API Guide](https://developer.godaddy.com/doc)
+- [Create GoDaddy SSOKey](https://developer.godaddy.com/doc)
 
 
 
@@ -39,10 +48,10 @@ There are four CA certificate chains that are supported by GoDaddy that can be u
 - GoDaddy SHA256 (GODADDY_SHA_2)
   - [Root Certificate](https://certs.godaddy.com/repository/gdroot-g2.crt) 
   - [Intermediate Certificate](https://certs.godaddy.com/repository/gdig2.crt.pem)
-- Startfield SHA-1 (STARFIELD_SHA_1)
+- Starfield SHA-1 (STARFIELD_SHA_1)
   - [Root Certificate](https://certs.godaddy.com/repository/sf-class2-root.crt) 
   - [Intermediate Certificate](https://certs.godaddy.com/repository/sf_intermediate.crt.pem)
-- Startfield SHA256 (STARFIELD_SHA_2)
+- Starfield SHA256 (STARFIELD_SHA_2)
   - [Root Certificate](https://certs.godaddy.com/repository/sfroot-g2.crt) 
   - [Intermediate Certificate](https://certs.godaddy.com/repository/sfig2.crt.pem)
 
@@ -190,7 +199,7 @@ Once your configuration file is saved, modify and run the C:\Program Files\Keyfa
 
 
 
-##Install
+## Installation
 Once the AnyGateway configuration has been imported, the GoDaddy AnyGateway binaries need to be placed in the Keyfactor AnyGateway Service install directory 
-(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). These files can be found in the offical build artifacts in DevOps.  Once this is done, restart the Keyfactor AnyGateway service.  The installation must FOLLOW the steps in the Configuration section of this documentation.
+(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). These files can be found in the official build artifacts in DevOps.  Once this is done, restart the Keyfactor AnyGateway service.  The installation must FOLLOW the steps in the Configuration section of this documentation.
 
