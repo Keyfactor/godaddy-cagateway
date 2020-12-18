@@ -177,7 +177,7 @@ namespace Keyfactor.AnyGateway.GoDaddy
             certRequest.period = Convert.ToInt32(productInfo.ProductParameters["CertificatePeriodInYears"]);
             certRequest.productType = productInfo.ProductID;
             certRequest.rootType = _rootType;
-            certRequest.slotSize = productInfo.ProductParameters.Keys.Contains("SlotSize") ? productInfo.ProductParameters["SlotSize"] : string.Empty;
+            certRequest.slotSize = productInfo.ProductParameters.Keys.Contains("SlotSize") ? productInfo.ProductParameters["SlotSize"] : "FIVE";
 
             List<string> sans = new List<string>();
             foreach(string[] sanValues in san.Values)
