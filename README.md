@@ -202,7 +202,7 @@ Once your configuration file is saved, modify and run the C:\Program Files\Keyfa
 
 
 ##### Step 8 - Add the GoDaddy Products (Templates) to Keyfactor Command
-For each of the three templates (GoDaddyDVSSL, GoDaddyDVWildcardSSL, and GoDaddyUCCDVSSL) configured in Step 4 in the AnyGatewayConfig.json file, create a corresponding template in Keyfactor Command.  **nOTE:** The Template Short Name of each **must** exactly match the corresponding labels set up in the AnyGatewayConfig.json file.
+For each of the three templates (GoDaddyDVSSL, GoDaddyDVWildcardSSL, and GoDaddyUCCDVSSL) configured in Step 4 in the AnyGatewayConfig.json file, create a corresponding template in Keyfactor Command.  **NOTE:** The Template Short Name of each **must** exactly match the corresponding labels set up in the AnyGatewayConfig.json file.
 
 
 ##### Step 9 - Add Custom Enrollment Fields
