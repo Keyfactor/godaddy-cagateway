@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Keyfactor.AnyGateway.GoDaddy.Models
 {
-    public class POSTCertificatesV1DVRequest : POSTCertificateRequest
+    public class POSTCertificatesV1EVRequest : POSTCertificateRequest
     {
+        public ContactInfo contact { get; set; }
+        public OrganizationInfo organization { get; set; }
     }
 }

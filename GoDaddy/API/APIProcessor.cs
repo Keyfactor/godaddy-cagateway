@@ -13,6 +13,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
         private string ApiKey { get; set; }
         private string ShopperId { get; set; }
 
+
         public APIProcessor(string apiUrl, string apiKey, string shopperId)
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
@@ -24,7 +25,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
             Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
         }
 
-        public string EnrollCSR(string csr, POSTCertificatesV1DVRequest requestBody)
+        public string EnrollCSR(string csr, POSTCertificateRequest requestBody)
         {
             Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
             
@@ -40,6 +41,22 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
             return SubmitRequest(request);
         }
 
+        public string RenewReissueCSR(string certificateId, string csr, POSTCertificateRenewalRequest requestBody, bool isRenew)
+        {
+            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+
+            string rtnMessage = string.Empty;
+            string endpoint = isRenew ? "renew" : "reissue";
+
+            string RESOURCE = $"v1/certificates/{certificateId}/{endpoint}";
+            RestRequest request = new RestRequest(RESOURCE, Method.POST);
+
+            request.AddJsonBody(requestBody);
+
+            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+
+            return SubmitRequest(request);
+        }
 
         public string GetCertificates(string customerId, int pageNumber, int pageSize)
         {

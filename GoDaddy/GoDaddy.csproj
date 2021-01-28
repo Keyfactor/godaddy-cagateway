@@ -78,15 +78,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\GoDaddyException.cs" />
+    <Compile Include="Models\JurisdictionInfo.cs" />
+    <Compile Include="Models\POSTCertificateRequest.cs" />
+    <Compile Include="Models\OrganizationInfo.cs" />
     <Compile Include="Models\APIError.cs" />
     <Compile Include="API\APIProcessor.cs" />
     <Compile Include="GoDaddyCAProxy.cs" />
+    <Compile Include="Models\AddressInfo.cs" />
+    <Compile Include="Models\ContactInfo.cs" />
     <Compile Include="Models\GETCertificatesDetails.cs" />
     <Compile Include="Models\GETShopper.cs" />
     <Compile Include="Models\GETCertificate.cs" />
     <Compile Include="Models\POSTCertificateRevoke.cs" />
     <Compile Include="Models\GETCertificateDetails.cs" />
+    <Compile Include="Models\POSTCertificateRenewal.cs" />
+    <Compile Include="Models\POSTCertificatesV1EV.cs" />
+    <Compile Include="Models\POSTCertificatesV1OV.cs" />
     <Compile Include="Models\POSTCertificatesV1DV.cs" />
+    <Compile Include="Models\POSTCertificateEnrollmentResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

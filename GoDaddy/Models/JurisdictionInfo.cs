@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace Keyfactor.AnyGateway.GoDaddy.Models
 {
-    public class POSTCertificatesV1DVRequest : POSTCertificateRequest
+    public class JurisdictionInfo
     {
+        public string state { get; set; }
+        public string country { get; set; }
     }
 }
