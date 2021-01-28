@@ -9,17 +9,16 @@ GoDaddy is a domain registrar, web hosting company, and most relevant here, a pu
 
 # GoDaddy Supported Certificate Types
 GoDaddy supports the following certificate products:
-- **Domain Validated SSL (DV_SSL)**
-- **Domain Validated Wildcard SSL (DV_WILDCARD_SSL)**
-- **Domain Validated SSL With SANs (UCC_DV_SSL)**
+- Domain Validated SSL (DV_SSL)
+- Domain Validated Wildcard SSL (DV_WILDCARD_SSL)
+- Domain Validated SSL With SANs (UCC_DV_SSL)
 - Organization Validated SSL (OV_SSL)
 - Organization Validated Wildcard SSL (OV_WILDCARD_SSL)
 - Organization Validated SSL With SANs (UCC_OV_SSL)
+- Organization Validated Code Signing (OV_CS)  **NOTE: GoDaddy is no longer selling new credits for this product type**
+- Organization Validated Driver Signing (OV_DS)  **NOTE: GoDaddy is no longer selling new credits for this product type**
 - Extended Validation SSL (EV_SSL)
-- Extended Validation Wildcard SSL (EV_WILDCARD_SSL)
 - Extended Validation SSL With SANs (UCC_EV_SSL)
-
-Currently only the **domain validated** products are supported in the GoDaddy AnyGateway.
 
 
 
@@ -206,13 +205,17 @@ For each of the three templates (GoDaddyDVSSL, GoDaddyDVWildcardSSL, and GoDaddy
 
 
 ##### Step 9 - Add Custom Enrollment Fields
-For each template set up in Step 8, the following custom enrollment fields **must** be added:
+For each template set up in Step 8, certain custom enrollment fields **must** be added:
+**GoDaddyDVSSL and GoDaddyDVWildcardSSL:**
 - CertificatePeriodInYears (required) - Number of years the certificate will be validated
 - LastName (required) - Last name of certificate requestor
 - FirstName (required) - First name of certificate requestor
 - Email (required) - Email address of requestor
 - Phone (required) - Phone number of requestor
-- SlotSize (optional) - Represents the maximum number of SANs that a certificate may have.  Default is "FIVE" if this is not supplied.  Only valid for GoDadyUCCDVSSL certificates.  This should be a multiple choice selection with the following values:
+
+**GoDaddyUCCDVSSL:**
+- All enrollment fields for GoDaddyDVSSL **and**
+- SlotSize (optional) - Represents the maximum number of SANs that a certificate may have.  Default is "FIVE" if this is not supplied.  Only valid for GoDaddy UCC* product type certificates.  This should be a multiple choice selection with the following values:
   - FIVE
   - TEN
   - FIFTEEN
@@ -221,7 +224,20 @@ For each template set up in Step 8, the following custom enrollment fields **mus
   - FOURTY
   - FIFTY
   - ONE_HUNDRED
-  
+
+  **GoDaddyOVSSL, GoDaddyOVWildcardSSL, GoDaddyOVCS, and GoDaddyOVDS:**
+  - All enrollment fields for GoDaddyDVSSL **and**
+  - JobTitle (required) - The job title of the certificate requestor
+  - Organization Name (required) The name of the organization to be validated against
+  - OrganizationAddress (required) - The address of the organization to be validated against
+  - OrganizationCity (required) - The city of the organization to be validated against
+  - OrganizationState (required) - The full state name (no abbreviations) of the organization to be validated against
+  - OrganizationCountry (required) - The 2 character abbreviation of the organization to be validated against
+  - OrganizationPhone (required) - The phone number of the organization to be validated against
+
+  **GoDaddyUCCEVSSL:**
+  - All enrollment fields for GoDaddyOVSSL **and**
+  - All enrollment fields for GoDaddyUCCDVSSL
 
 
 ## Installation
