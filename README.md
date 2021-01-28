@@ -198,6 +198,31 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 Once your configuration file is saved, modify and run the C:\Program Files\Keyfactor\Keyfactor AnyGateway\Configuration Scripts\SetUp.ps1 script.  This will save your configuration from Step 4 into the GoDaddy database defined when installing/configuring the Keyfactor Gateway (Prerequisites).
 
 
+##### Step 7 - Add the GoDaddy CA to Keyfactor Command
+
+
+##### Step 8 - Add the GoDaddy Products (Templates) to Keyfactor Command
+For each of the three templates (GoDaddyDVSSL, GoDaddyDVWildcardSSL, and GoDaddyUCCDVSSL) configured in Step 4 in the AnyGatewayConfig.json file, create a corresponding template in Keyfactor Command.  **NOTE:** The Template Short Name of each **must** exactly match the corresponding labels set up in the AnyGatewayConfig.json file.
+
+
+##### Step 9 - Add Custom Enrollment Fields
+For each template set up in Step 8, the following custom enrollment fields **must** be added:
+- CertificatePeriodInYears (required) - Number of years the certificate will be validated
+- LastName (required) - Last name of certificate requestor
+- FirstName (required) - First name of certificate requestor
+- Email (required) - Email address of requestor
+- Phone (required) - Phone number of requestor
+- SlotSize (optional) - Represents the maximum number of SANs that a certificate may have.  Default is "FIVE" if this is not supplied.  Only valid for GoDadyUCCDVSSL certificates.  This should be a multiple choice selection with the following values:
+  - FIVE
+  - TEN
+  - FIFTEEN
+  - TWENTY
+  - THIRTY
+  - FOURTY
+  - FIFTY
+  - ONE_HUNDRED
+  
+
 
 ## Installation
 Once the AnyGateway configuration has been imported, the GoDaddy AnyGateway binaries need to be placed in the Keyfactor AnyGateway Service install directory 
