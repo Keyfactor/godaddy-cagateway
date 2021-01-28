@@ -1,2 +1,6 @@
+v1.0.1
+- Added support for 5 OV and 2 EV GoDaddy products
+- Added Renew/Reissue functionality
+
 v1.0.0:
 - Original Version
