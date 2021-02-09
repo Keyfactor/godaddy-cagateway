@@ -30,7 +30,7 @@ GoDaddy supports the following certificate products:
 
 - [GoDaddy Portal](https://ae.godaddy.com/)
 - [GoDaddy API Guide](https://developer.godaddy.com/doc)
-- [Create GoDaddy SSOKey](https://developer.godaddy.com/doc)
+- [Create GoDaddy SSOKey](https://developer.godaddy.com/keys?hbi_code=1)
 
 
 
