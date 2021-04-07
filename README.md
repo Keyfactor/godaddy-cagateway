@@ -86,10 +86,11 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
     		},
     		"GoDaddyDVWildcardSSL": {
       			"ProductID": "DV_WILDCARD_SSL"
-		},
+		    },
     		"GoDaddyUCCDVSSL": {
       			"ProductID": "UCC_DV_SSL"
     		}	
+	},
 	/*Grant permissions on the CA to users or groups in the local domain.
 	READ: Enumerate and read contents of certificates.
 	ENROLL: Request certificates from the CA.
@@ -166,7 +167,7 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
     		"EnrollmentRetries": "2",
 		// SecondsBetweenEnrollmentRetries is the amount of time an Enroll operation will wait between enrollment requests against the GoDaddy
 		//  CA if the previous attempt did not produce a certificate with a status of ISSUED or PENDING_ISSUANCE.
-    		"SecondsBetweenEnrollmentRetries": "5"
+    		"SecondsBetweenEnrollmentRetries": "5",
 		// This section is required by not used by the GoDaddy AnyGateway.  This is used if certificate authentication was implmeneted against
 		//  The GoDaddy CA.  This is not supported at this time.
 		"ClientCertificate":{
