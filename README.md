@@ -39,7 +39,7 @@ GoDaddy supports the following certificate products:
 To begin, you must have the AnyGateway Service installed and operational before attempting to configure the GoDaddy AnyGateway plugin. Follow the installation instructions
 [here](https://devops.corp.keyfactor.com/MainCollection/SolutionEngineering/_wiki/wikis/SolutionEngineering.wiki?wikiVersion=GBwikiMaster&pagePath=%2FAnyGateway%2FInstallation%20%26%20Configuration).
 
-A production GoDaddy account must be set up that will be associated with the gateway and an API Key created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
+A production GoDaddy account must be set up that will be associated with the gateway and an API Key/Secret created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
 
 
 ### Installation and Configuration
@@ -152,8 +152,8 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 		// The ShopperId is the "Customer #" found by selecting the pulldown on the top right of the GoDaddy portal home page
 		//  after signing in using the account being used for the Gateway
     		"ShopperId": "9999999999",
-		// The APIKey is the GoDaddy API Key mentioned in "Prerequisites"
-    		"APIKey": "sso-key {large string value}",
+		// The APIKey is the GoDaddy API Key and secret mentioned in "Prerequisites"
+    		"APIKey": "sso-key {large string value API Key}:{large string value API Secret}",
 		// One of four values based on the CA chain enrolled certificates should be validated against - GODADDY_SHA_1, GODADDY_SHA_2, 
 		//  STARTFIELD_SHA1, or STARTFIELD_SHA2
     		"RootType": "GODADDY_SHA_2",
