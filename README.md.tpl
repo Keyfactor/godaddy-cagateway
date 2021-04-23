@@ -6,12 +6,6 @@
 <!-- add integration specific information below -->
 *** 
 
-
-# GoDaddy AnyGateway Links:
-- [GoDaddy AnyGateway Wiki](https://devops.corp.keyfactor.com/MainCollection/SolutionEngineering/_wiki/wikis/SolutionEngineering.wiki?wikiVersion=GBwikiMaster&pagePath=%2FIntegration%20List%2FAnyGateway%252DGoDaddy)
-
-
-
 # GoDaddy Supported Certificate Types
 GoDaddy supports the following certificate products:
 - Domain Validated SSL (DV_SSL)
@@ -37,8 +31,7 @@ GoDaddy supports the following certificate products:
 
 # Getting Started
 ### Prerequsites
-To begin, you must have the AnyGateway Service installed and operational before attempting to configure the GoDaddy AnyGateway plugin. Follow the installation instructions
-[here](https://devops.corp.keyfactor.com/MainCollection/SolutionEngineering/_wiki/wikis/SolutionEngineering.wiki?wikiVersion=GBwikiMaster&pagePath=%2FAnyGateway%2FInstallation%20%26%20Configuration).
+To begin, you must have the AnyGateway Service installed and operational before attempting to configure the GoDaddy AnyGateway plugin. **INSTALLATION INSTRUCTIONS LINK**
 
 A production GoDaddy account must be set up that will be associated with the gateway and an API Key/Secret created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
 
@@ -69,7 +62,7 @@ For each GoDaddy product being supported, you must create a Certificate Template
 
 ##### Step 4 - Install the GoDaddy AnyGateway binaries
 Once the AnyGateway configuration has been imported, the GoDaddy AnyGateway binaries need to be placed in the Keyfactor AnyGateway Service install directory 
-(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). These files can be found by visiting the ([GoDaddy AnyGateway Wiki](https://devops.corp.keyfactor.com/MainCollection/SolutionEngineering/_wiki/wikis/SolutionEngineering.wiki?wikiVersion=GBwikiMaster&pagePath=%2FIntegration%20List%2FAnyGateway%252DGoDaddy)) in DevOps and navigating to the bottom of the page for the link to the latest version.  Once this is done, restart the Keyfactor AnyGateway service.
+(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). **LOCATION OF BINARIES**  Once this is done, restart the Keyfactor AnyGateway service.
 
 
 ##### Step 5 - Modify the AnyGatewayConfig.json file
