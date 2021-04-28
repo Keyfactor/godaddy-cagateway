@@ -2,6 +2,10 @@
 
 name: Keyfactor Extension - Release
 
+env:
+  project_folder: GoDaddy
+
+
 # Controls when the action will run. 
 on:
   # Triggers the workflow on push
@@ -13,7 +17,7 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
+ 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -22,10 +26,12 @@ jobs:
     runs-on: windows-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
+    
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+        with: 
+          path: .
       - name: Setup Envrionment
         id: setup_env
         run: |
@@ -93,7 +99,7 @@ jobs:
         if: ${{ success() }}
         run: |
            md ${{ github.workspace }}\zip\Keyfactor
-           Compress-Archive -Path ${{ github.workspace }}\GoDaddy\bin\Release\*.dll,${{ github.workspace }}\GoDaddy\bin\Release\config.json -DestinationPath ${{ github.workspace }}\zip\Keyfactor\$Env:REPO_NAME.zip -Force      
+           Compress-Archive -Path ${{env.project_folder}}\bin\Release\*.dll,${{ github.workspace }}\${{env.project_folder}}\bin\Release\config.json -DestinationPath ${{ github.workspace }}\zip\Keyfactor\$Env:REPO_NAME.zip -Force      
       
       - name: Upload Release Asset (x64)
         if: ${{ success() }}
@@ -107,7 +113,7 @@ jobs:
           asset_name: ${{ env.REPO_NAME}}_${{ steps.create_release.outputs.current_tag }}.zip
           asset_content_type: application/zip                 
       
-      - name: On Failure - Remove Tags and Release
+      - name: On Failure Remove Tags and Release
         if: ${{ failure() }}
         uses: dev-drprasad/delete-tag-and-release@v0.2.0
         with:
