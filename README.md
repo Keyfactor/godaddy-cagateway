@@ -254,7 +254,6 @@ For each template set up in Step 8, certain custom enrollment fields **must** be
   - All enrollment fields for GoDaddyEVSSL **and**
   - SlotSize (optional) - As described under GoDaddyUCCDVSSL 
 
-
  ***
 
 ### License
