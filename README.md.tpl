@@ -1,4 +1,4 @@
-﻿# {{ name }}
+# {{ name }}
 ## {{ integration_type | capitalize }}
 
 {{ description }}
