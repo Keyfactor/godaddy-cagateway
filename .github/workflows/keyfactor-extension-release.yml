@@ -29,9 +29,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-        with: 
-          path: .
-      - name: Setup Envrionment
+
+      - name: Setup Environment
         id: setup_env
         run: |
             echo "Setup Envrionment Variables for Workflow"
@@ -99,7 +98,6 @@ jobs:
         run: |
            md ${{ github.workspace }}\zip\Keyfactor
            Compress-Archive -Path ${{env.project_folder}}\bin\Release\*.dll,${{ github.workspace }}\${{env.project_folder}}\bin\Release\*.json -DestinationPath ${{ github.workspace }}\zip\Keyfactor\$Env:REPO_NAME.zip -Force      
-
       
       - name: Upload Release Asset (x64)
         if: ${{ success() }}
@@ -119,7 +117,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file_pattern: AssemblyInfo.cs
+          file_pattern: Properties/AssemblyInfo.cs
           commit_message: Updated AssemblyInfo to version ${{ steps.create_release.outputs.current_tag }}          
           commit_user_name: Keyfactor
           commit_user_email: keyfactor@keyfactor.github.io
