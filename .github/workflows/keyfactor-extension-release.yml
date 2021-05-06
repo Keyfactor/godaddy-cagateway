@@ -1,9 +1,10 @@
-# This is a basic workflow to help you get started with Actions
+# below is the folder name for the project where the binaries will be found.
+env:
+  project_folder: GoDaddy 
+  
 
 name: Keyfactor Extension - Release
 
-env:
-  project_folder: GoDaddy
 # Controls when the action will run. 
 on:
   # Triggers the workflow on pull requests closing
