@@ -161,7 +161,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
                     returnStatus = PKIConstants.Microsoft.RequestDisposition.ISSUED;
                     break;
                 case CertificateStatusEnum.PENDING_ISSUANCE:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.PENDING;
+                    returnStatus = PKIConstants.Microsoft.RequestDisposition.EXTERNAL_VALIDATION;
                     break;
                 case CertificateStatusEnum.REVOKED:
                     returnStatus = PKIConstants.Microsoft.RequestDisposition.REVOKED;
