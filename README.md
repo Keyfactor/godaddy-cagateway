@@ -20,7 +20,6 @@ GoDaddy supports the following certificate products:
 - Extended Validation SSL With SANs (UCC_EV_SSL)
 
 
-
 # GoDaddy Resources
 
 - [GoDaddy Portal](https://ae.godaddy.com/)
