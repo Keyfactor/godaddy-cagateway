@@ -84,11 +84,11 @@ jobs:
       - name: Increment Assembly Version
         run: |
             $VersionRegex = "\d+\.\d+\.\d+"
-            $assemlyFilePath = (Get-ChildItem -Include AssemblyInfo.cs -File -Recurse).fullname
-            $filecontent = Get-Content($assemlyFilePath)
+            $assemblyFilePath = (Get-ChildItem -Include AssemblyInfo.cs -File -Recurse).fullname
+            $filecontent = Get-Content($assemblyFilePath)
             $newVer = "${{ steps.create_release.outputs.current_tag }}".TrimStart('v')
-            attrib $assemlyFilePath -r
-            $filecontent -replace $VersionRegex, $newVer | Out-File $assemlyFilePath
+            attrib $assemblyFilePath -r
+            $filecontent -replace $VersionRegex, $newVer | Out-File $assemblyFilePath
       
       - name: Execute MSBuild Commands
         run: |
@@ -111,8 +111,20 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ github.workspace }}\zip\Keyfactor\${{ env.REPO_NAME}}.zip
           asset_name: ${{ env.REPO_NAME}}_${{ steps.create_release.outputs.current_tag }}.zip
-          asset_content_type: application/zip                 
-      
+          asset_content_type: application/zip   
+
+      - name: check in new assembly version
+        if: ${{ success() }}
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file_pattern: AssemblyInfo.cs
+          commit_message: Updated AssemblyInfo to version ${{ steps.create_release.outputs.current_tag }}          
+          commit_user_name: Keyfactor
+          commit_user_email: keyfactor@keyfactor.github.io
+          commit_author: Keyfactor <keyfactor@keyfactor.github.io>
+
       - name: On Failure Remove Tags and Release
         if: ${{ failure() }}
         uses: dev-drprasad/delete-tag-and-release@v0.2.0
