@@ -1,3 +1,6 @@
+v1.0.3
+- Code cleanup, publish to github.
+
 v1.0.2
 - Remove PEM header before returning certificates during sync and enrollment
 
