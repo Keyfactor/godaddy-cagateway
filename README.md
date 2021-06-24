@@ -1,7 +1,12 @@
 # GoDaddy
 ## Ca-gateway
 
-In addition to being a domain registrar and a web hosting company, GoDaddy is also a public certificate authority. The GoDaddy Gateway enables the following certificate authority management functions via Keyfactor Command: Enrollment of new certificates, Renewal and Reissuance of existing certificates, Revocation of existing certificates, and Synchronization of previously issued certificates.
+In addition to being a domain registrar and a web hosting company, 
+GoDaddy is also a public certificate authority. The GoDaddy Gateway 
+enables the following certificate authority management functions via 
+Keyfactor Command: Enrollment of new certificates, Renewal and 
+Reissuance of existing certificates, Revocation of existing 
+certificates, and Synchronization of previously issued certificates.
 <!-- add integration specific information below -->
 *** 
 
