@@ -13,7 +13,7 @@
 // limitations under the License.
 
 using CSS.Common.Logging;
-using CSS.PKI;
+using Keyfactor.PKI;
 using Keyfactor.AnyGateway.GoDaddy.Models;
 using Newtonsoft.Json;
 using RestSharp;
