@@ -60,7 +60,12 @@ For each GoDaddy product being supported, you must create a Certificate Template
 
 ##### Step 4 - Install the GoDaddy AnyGateway binaries
 Once the AnyGateway configuration has been imported, the GoDaddy AnyGateway binaries need to be placed in the Keyfactor AnyGateway Service install directory 
-(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). **LOCATION OF BINARIES**  Once this is done, restart the Keyfactor AnyGateway service.
+(C:\\Program Files\\Keyfactor\\Keyfactor AnyGateway for default installations). 
+The following binaries need to be placed in the install directory:
+GoDaddyCAProxy.dll
+RestSharp.dll
+
+Once this is done, restart the Keyfactor AnyGateway service.
 
 
 ##### Step 5 - Modify the AnyGatewayConfig.json file
@@ -159,14 +164,7 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
     		"EnrollmentRetries": "2",
 		// SecondsBetweenEnrollmentRetries is the amount of time an Enroll operation will wait between enrollment requests against the GoDaddy
 		//  CA if the previous attempt did not produce a certificate with a status of ISSUED or PENDING_ISSUANCE.
-    		"SecondsBetweenEnrollmentRetries": "5",
-		// This section is required by not used by the GoDaddy AnyGateway.  This is used if certificate authentication was implmeneted against
-		//  The GoDaddy CA.  This is not supported at this time.
-		"ClientCertificate":{
-			"StoreName":"My",
-			"StoreLocation":"LocalMachine",
-			"Thumbprint":"1234567890123456789123"
-		}
+    		"SecondsBetweenEnrollmentRetries": "5"
 	},
 	/*Information to register the Gateway for client connections.*/
 	"GatewayRegistration":{
@@ -195,8 +193,7 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 ##### Step 6 - Start the Keyfactor AnyGateway Service
 
 
-##### Step 7 - Run the SetUp.ps1 script supplied by the AnyGateway install
-Once your configuration file is saved, modify and run the C:\Program Files\Keyfactor\Keyfactor AnyGateway\Configuration Scripts\SetUp.ps1 script.  This will save your configuration from Step 5 into the GoDaddy database defined when installing/configuring the Keyfactor Gateway (Prerequisites).
+##### Step 7 - Follow the AnyGateway instructions to set up your database and configuration
 
 
 ##### Step 8 - Add the GoDaddy CA to Keyfactor Command
