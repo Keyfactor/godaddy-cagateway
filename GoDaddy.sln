@@ -8,11 +8,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D9941D2-A44F-4593-A33E-F5E0C861CAEB}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		CHANGELOG.MD = CHANGELOG.MD
 		GoDaddy.sln.licenseheader = GoDaddy.sln.licenseheader
 		integration-manifest.json = integration-manifest.json
 		README.md = README.md
 		README.md.tpl = README.md.tpl
-		Release Notes.txt = Release Notes.txt
 	EndProjectSection
 EndProject
 Global
