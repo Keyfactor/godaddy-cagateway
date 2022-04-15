@@ -65,10 +65,12 @@ The following binaries need to be placed in the install directory:
 GoDaddyCAProxy.dll
 RestSharp.dll
 
+##### Step 5 - Edit the CAProxyServer.exe.config file in the Keyfactor Gateway installation folder.  Modify the "unity" section "<alias alias=CAConnector" line to read: *<alias alias="CAConnector" type="Keyfactor.AnyGateway.GoDaddy.GoDaddyCAProxy, GoDaddyCAProxy"/>*
+
 Once this is done, restart the Keyfactor AnyGateway service.
 
 
-##### Step 5 - Modify the AnyGatewayConfig.json file
+##### Step 6 - Modify the AnyGatewayConfig.json file
 After installing the Keyfactor AnyGateway service (see Prerequisites), there should be a AnyGatewayConfig.json file located in your root c:\ folder.  Edit it as follows: 
 
 ```json
@@ -190,20 +192,20 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 ```
 
 
-##### Step 6 - Start the Keyfactor AnyGateway Service
+##### Step 7 - Start the Keyfactor AnyGateway Service
 
 
-##### Step 7 - Follow the AnyGateway instructions to set up your database and configuration
+##### Step 8 - Follow the AnyGateway instructions to set up your database and configuration
 
 
-##### Step 8 - Add the GoDaddy CA to Keyfactor Command
+##### Step 9 - Add the GoDaddy CA to Keyfactor Command
 
 
-##### Step 9 - Add the GoDaddy Products (Templates) to Keyfactor Command
+##### Step 10 - Add the GoDaddy Products (Templates) to Keyfactor Command
 For each of the three templates (GoDaddyDVSSL, GoDaddyDVWildcardSSL, and GoDaddyUCCDVSSL) configured in Step 4 in the AnyGatewayConfig.json file, create a corresponding template in Keyfactor Command.  **NOTE:** The Template Short Name of each **must** exactly match the corresponding labels set up in the AnyGatewayConfig.json file.
 
 
-##### Step 10 - Add Custom Enrollment Fields
+##### Step 11 - Add Custom Enrollment Fields
 For each template set up in Step 8, certain custom enrollment fields **must** be added:
 
 **GoDaddyDVSSL and GoDaddyDVWildcardSSL:**
