@@ -66,7 +66,7 @@ GoDaddyCAProxy.dll
 RestSharp.dll
 
 ##### Step 5 - Modify the CAProxyServer.exe.config file
-Edit the CAProxyServer.exe.config file in the Keyfactor Gateway installation folder.  Modify the "unity" section "<alias alias=CAConnector" line to read: *\<alias alias="CAConnector" type="Keyfactor.AnyGateway.GoDaddy.GoDaddyCAProxy, GoDaddyCAProxy"/\>*
+Edit the CAProxyServer.exe.config file in the Keyfactor Gateway installation folder.  Modify the "unity" section "<alias alias=CAConnector" line to read: *\<alias alias="CAConnector" type="**Keyfactor.AnyGateway.GoDaddy.GoDaddyCAProxy, GoDaddyCAProxy**"/\>*
 
 Once this is done, restart the Keyfactor AnyGateway service.
 
