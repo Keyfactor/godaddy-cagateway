@@ -1,8 +1,16 @@
 # GoDaddy CA Gateway
-## Ca-gateway
 
 GoDaddy is a domain registrar, web hosting company, and most relevant here, a public certificate authority.  The GoDaddy AnyGateway is designed to allow Keyfactor Command the ability to - Sync certificates Issued from the CA - Request new certificates from the CA - Revoke certificates directly from Keyfactor Command - Certificate Reissue/Renewal
-<!-- add integration specific information below -->
+
+#### Integration status: Pilot - Ready for use in test environments. Not for use in production.
+
+## About the Keyfactor AnyGateway CA Connector
+
+This repository contains an AnyGateway CA Connector, which is a plugin to the Keyfactor AnyGateway. AnyGateway CA Connectors allow Keyfactor Command to be used for inventory, issuance, and revocation of certificates from a third-party certificate authority.
+
+---
+## integration_type = ca-gateway
+
 *** 
 
 # GoDaddy Supported Certificate Types
@@ -257,3 +265,6 @@ For each template set up in Step 8, certain custom enrollment fields **must** be
 
 ### License
 [Apache](https://apache.org/licenses/LICENSE-2.0)
+
+
+
