@@ -42,6 +42,8 @@ To begin, you must have the AnyGateway Service installed and operational before 
 
 A production GoDaddy account must be set up that will be associated with the gateway and an API Key/Secret created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
 
+For enrollment, make sure you have pre-purchased enough certificates of the type you will be enrolling before attempting to enroll certificates via this gateway.  The gateway itself does not purchase certificates and requires that the product (certificate) be pre-purchased for the gateway to enroll it successfully.  The certificate may be purchased using any payment method including but not limited to GoDaddy's Good as Gold or in store credits, but just having these funds available is not enough.  The product MUST actually be pre-purchased using an available payment method.
+
 
 ### Installation and Configuration
 ##### Step 1 - Install the GoDaddy root and intermediate certificates.
