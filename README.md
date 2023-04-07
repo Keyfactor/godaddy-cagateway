@@ -8,12 +8,9 @@ GoDaddy is a domain registrar, web hosting company, and most relevant here, a pu
 
 This repository contains an AnyGateway CA Connector, which is a plugin to the Keyfactor AnyGateway. AnyGateway CA Connectors allow Keyfactor Command to be used for inventory, issuance, and revocation of certificates from a third-party certificate authority.
 
----
 
 
 
-
----
 
 *** 
 
