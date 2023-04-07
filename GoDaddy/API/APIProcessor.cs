@@ -1,11 +1,11 @@
 ﻿// Copyright 2021 Keyfactor
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,234 +21,251 @@ using System;
 
 namespace Keyfactor.AnyGateway.GoDaddy.API
 {
-    class APIProcessor : LoggingClientBase
-    {
-        private string ApiUrl { get; set; }
-        private string ApiKey { get; set; }
-        private string ShopperId { get; set; }
+	internal class APIProcessor : LoggingClientBase
+	{
+		private string ApiUrl { get; set; }
+		private string ApiKey { get; set; }
+		private string ShopperId { get; set; }
 
+
+		private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
+        private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
+            "Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
 
         public APIProcessor(string apiUrl, string apiKey, string shopperId)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            ApiUrl = apiUrl;
-            ApiKey = apiKey;
-            ShopperId = shopperId;
+			ApiUrl = apiUrl;
+			ApiKey = apiKey;
+			ShopperId = shopperId;
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
-        }
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+		}
 
-        public string EnrollCSR(string csr, POSTCertificateRequest requestBody)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
-            
-            string rtnMessage = string.Empty;
+		public string EnrollCSR(string csr, POSTCertificateRequest requestBody)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            string RESOURCE = "v1/certificates";
-            RestRequest request = new RestRequest(RESOURCE, Method.POST);
+			string rtnMessage = string.Empty;
 
-            request.AddJsonBody(requestBody);
+			string RESOURCE = "v1/certificates";
+			RestRequest request = new RestRequest(RESOURCE, Method.POST);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+			request.AddJsonBody(requestBody);
 
-            return SubmitRequest(request);
-        }
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-        public string RenewReissueCSR(string certificateId, string csr, POSTCertificateRenewalRequest requestBody, bool isRenew)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			Logger.Trace($"Json Request Body: {JsonConvert.SerializeObject(requestBody)}");
 
-            string rtnMessage = string.Empty;
-            string endpoint = isRenew ? "renew" : "reissue";
+			return SubmitRequest(request);
+		}
 
-            string RESOURCE = $"v1/certificates/{certificateId}/{endpoint}";
-            RestRequest request = new RestRequest(RESOURCE, Method.POST);
+		public string RenewReissueCSR(string certificateId, string csr, POSTCertificateRenewalRequest requestBody, bool isRenew)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            request.AddJsonBody(requestBody);
+			string rtnMessage = string.Empty;
+			string endpoint = isRenew ? "renew" : "reissue";
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+			string RESOURCE = $"v1/certificates/{certificateId}/{endpoint}";
+			RestRequest request = new RestRequest(RESOURCE, Method.POST);
 
-            return SubmitRequest(request);
-        }
+			request.AddJsonBody(requestBody);
 
-        public string GetCertificates(string customerId, int pageNumber, int pageSize)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-            string rtnMessage = string.Empty;
+			Logger.Trace($"Json Request Body: {JsonConvert.SerializeObject(requestBody)}");
 
-            string RESOURCE = $"v2/customers/{customerId}/certificates?offset={pageNumber.ToString()}&limit={pageSize.ToString()}";
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
+			return SubmitRequest(request);
+		}
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+		public string GetCertificates(string customerId, int pageNumber, int pageSize)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            return SubmitRequest(request);
-        }
+			string rtnMessage = string.Empty;
 
-        public string GetCertificate(string certificateId)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			string RESOURCE = $"v2/customers/{customerId}/certificates?offset={pageNumber.ToString()}&limit={pageSize.ToString()}";
+			RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
-            string rtnMessage = string.Empty;
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-            string RESOURCE = $"v1/certificates/{certificateId}";
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
+			return SubmitRequest(request);
+		}
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+		public string GetCertificate(string certificateId)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            return SubmitRequest(request);
-        }
+			string rtnMessage = string.Empty;
 
-        public string DownloadCertificate(string certificateId)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			string RESOURCE = $"v1/certificates/{certificateId}";
+			RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
-            string rtnMessage = string.Empty;
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-            string RESOURCE = $"v1/certificates/{certificateId}/download";
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
+			return SubmitRequest(request);
+		}
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+		public string DownloadCertificate(string certificateId)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            return SubmitRequest(request);
-        }
-        
-        public void RevokeCertificate(string certificateId, POSTCertificateRevokeRequest.REASON reason)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			string rtnMessage = string.Empty;
 
-            string rtnMessage = string.Empty;
+			string RESOURCE = $"v1/certificates/{certificateId}/download";
+			RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
-            string RESOURCE = $"v1/certificates/{certificateId}/revoke";
-            RestRequest request = new RestRequest(RESOURCE, Method.POST);
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-            POSTCertificateRevokeRequest body = new POSTCertificateRevokeRequest();
-            body.reason = reason.ToString();
+			return SubmitRequest(request);
+		}
 
-            request.AddJsonBody(body);
-            SubmitRequest(request);
+		public void RevokeCertificate(string certificateId, POSTCertificateRevokeRequest.REASON reason)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
-        }
+			string rtnMessage = string.Empty;
 
-        public string GetCustomerId()
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			string RESOURCE = $"v1/certificates/{certificateId}/revoke";
+			RestRequest request = new RestRequest(RESOURCE, Method.POST);
 
-            string rtnMessage = string.Empty;
+			POSTCertificateRevokeRequest body = new POSTCertificateRevokeRequest();
+			body.reason = reason.ToString();
 
-            string RESOURCE = $"v1/shoppers/{ShopperId}?includes=customerId";
-            RestRequest request = new RestRequest(RESOURCE, Method.GET);
+			request.AddJsonBody(body);
 
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+			Logger.Trace($"Json Request Body: {JsonConvert.SerializeObject(body)}");
+			SubmitRequest(request);
 
-            return SubmitRequest(request);
-        }
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+		}
 
-        public static int MapReturnStatus(CertificateStatusEnum status)
-        {
-            PKIConstants.Microsoft.RequestDisposition returnStatus = PKIConstants.Microsoft.RequestDisposition.UNKNOWN;
+		public string GetCustomerId()
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-            switch (status)
-            {
-                case CertificateStatusEnum.DENIED:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.DENIED;
-                    break;
-                case CertificateStatusEnum.EXPIRED:
-                case CertificateStatusEnum.CURRENT:
-                case CertificateStatusEnum.ISSUED:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.ISSUED;
-                    break;
-                case CertificateStatusEnum.PENDING_ISSUANCE:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.EXTERNAL_VALIDATION;
-                    break;
-                case CertificateStatusEnum.REVOKED:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.REVOKED;
-                    break;
-                default:
-                    returnStatus = PKIConstants.Microsoft.RequestDisposition.FAILED;
-                    break;
-            }
+			string rtnMessage = string.Empty;
 
-            return Convert.ToInt32(returnStatus);
-        }
+			string RESOURCE = $"v1/shoppers/{ShopperId}?includes=customerId";
+			RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
-        public static POSTCertificateRevokeRequest.REASON MapRevokeReason(uint reason)
-        {
-            POSTCertificateRevokeRequest.REASON returnReason = POSTCertificateRevokeRequest.REASON.PRIVILEGE_WITHDRAWN;
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-            switch (reason)
-            {
-                case 1:
-                    returnReason = POSTCertificateRevokeRequest.REASON.KEY_COMPROMISE;
-                    break;
-                case 3:
-                    returnReason = POSTCertificateRevokeRequest.REASON.AFFILIATION_CHANGED;
-                    break;
-                case 4:
-                    returnReason = POSTCertificateRevokeRequest.REASON.SUPERSEDED;
-                    break;
-                case 5:
-                    returnReason = POSTCertificateRevokeRequest.REASON.CESSATION_OF_OPERATION;
-                    break;
-            }
+			return SubmitRequest(request);
+		}
 
-            return returnReason;
-        }
+		public static int MapReturnStatus(CertificateStatusEnum status)
+		{
+			PKIConstants.Microsoft.RequestDisposition returnStatus = PKIConstants.Microsoft.RequestDisposition.UNKNOWN;
 
+			switch (status)
+			{
+				case CertificateStatusEnum.DENIED:
+					returnStatus = PKIConstants.Microsoft.RequestDisposition.DENIED;
+					break;
 
-        #region Private Methods
-        private string SubmitRequest(RestRequest request)
-        {
-            Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
-            Logger.Trace($"Request Resource: {request.Resource}");
-            Logger.Trace($"Request Method: {request.Method.ToString()}");
-            Logger.Trace($"Request Body: {(request.Body == null ? string.Empty : request.Body.Value.ToString())}");
+				case CertificateStatusEnum.EXPIRED:
+				case CertificateStatusEnum.CURRENT:
+				case CertificateStatusEnum.ISSUED:
+					returnStatus = PKIConstants.Microsoft.RequestDisposition.ISSUED;
+					break;
 
-            IRestResponse response;
+				case CertificateStatusEnum.PENDING_ISSUANCE:
+					returnStatus = PKIConstants.Microsoft.RequestDisposition.EXTERNAL_VALIDATION;
+					break;
 
-            RestClient client = new RestClient(ApiUrl);
-            request.AddHeader("Authorization", ApiKey);
+				case CertificateStatusEnum.REVOKED:
+					returnStatus = PKIConstants.Microsoft.RequestDisposition.REVOKED;
+					break;
 
-            try
-            {
-                response = client.Execute(request);
-            }
-            catch (Exception ex)
-            {
-                string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}");
-                Logger.Error(exceptionMessage);
-                throw new GoDaddyException(exceptionMessage);
-            }
+				default:
+					returnStatus = PKIConstants.Microsoft.RequestDisposition.FAILED;
+					break;
+			}
 
-            if (response.StatusCode != System.Net.HttpStatusCode.OK &&
-                response.StatusCode != System.Net.HttpStatusCode.Accepted &&
-                response.StatusCode != System.Net.HttpStatusCode.Created &&
-                response.StatusCode != System.Net.HttpStatusCode.NoContent)
-            {
-                string errorMessage;
+			return Convert.ToInt32(returnStatus);
+		}
 
-                try
-                {
-                    APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-                    errorMessage = $"{error.code}: {error.message}";
-                }
-                catch (JsonReaderException ex)
-                {
-                    errorMessage = response.Content;
-                }
+		public static POSTCertificateRevokeRequest.REASON MapRevokeReason(uint reason)
+		{
+			POSTCertificateRevokeRequest.REASON returnReason = POSTCertificateRevokeRequest.REASON.PRIVILEGE_WITHDRAWN;
 
-                string exceptionMessage = $"Error processing {request.Resource}: {errorMessage}";
-                Logger.Error(exceptionMessage);
-                throw new GoDaddyException(exceptionMessage);
-            }
+			switch (reason)
+			{
+				case 1:
+					returnReason = POSTCertificateRevokeRequest.REASON.KEY_COMPROMISE;
+					break;
 
-            Logger.Trace($"API Result: {response.Content}");
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+				case 3:
+					returnReason = POSTCertificateRevokeRequest.REASON.AFFILIATION_CHANGED;
+					break;
 
-            return response.Content;
-        }
-        #endregion
-    }
+				case 4:
+					returnReason = POSTCertificateRevokeRequest.REASON.SUPERSEDED;
+					break;
+
+				case 5:
+					returnReason = POSTCertificateRevokeRequest.REASON.CESSATION_OF_OPERATION;
+					break;
+			}
+
+			return returnReason;
+		}
+
+		#region Private Methods
+
+		private string SubmitRequest(RestRequest request)
+		{
+			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+			Logger.Trace($"Request Resource: {request.Resource}");
+			Logger.Trace($"Request Method: {request.Method.ToString()}");
+
+			IRestResponse response;
+
+			RestClient client = new RestClient(ApiUrl);
+			request.AddHeader("Authorization", ApiKey);
+
+			try
+			{
+				response = client.Execute(request);
+			}
+			catch (Exception ex)
+			{
+				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
+				Logger.Error(exceptionMessage);
+				throw new GoDaddyException(exceptionMessage);
+			}
+
+			if (response.StatusCode != System.Net.HttpStatusCode.OK &&
+				response.StatusCode != System.Net.HttpStatusCode.Accepted &&
+				response.StatusCode != System.Net.HttpStatusCode.Created &&
+				response.StatusCode != System.Net.HttpStatusCode.NoContent)
+			{
+				string errorMessage;
+
+				try
+				{
+					APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
+					errorMessage = $"{error.code}: {error.message}";
+				}
+				catch (JsonReaderException ex)
+				{
+					errorMessage = response.Content;
+				}
+
+				string exceptionMessage = $"Error processing {request.Resource}: {errorMessage}";
+				Logger.Error(exceptionMessage);
+				throw new GoDaddyException(exceptionMessage);
+			}
+
+			Logger.Trace($"API Result: {response.Content}");
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+
+			return response.Content;
+		}
+
+		#endregion Private Methods
+	}
 }
