@@ -27,12 +27,12 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private string ApiKey { get; set; }
 		private string ShopperId { get; set; }
 
-
 		private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
-        private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
-            "Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
 
-        public APIProcessor(string apiUrl, string apiKey, string shopperId)
+		private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
+			"Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
+
+		public APIProcessor(string apiUrl, string apiKey, string shopperId)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -237,6 +237,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				Logger.Error(exceptionMessage);
 				throw new GoDaddyException(exceptionMessage);
 			}
+			Logger.Trace($"Response Status Code: {response.StatusCode}");
 
 			if (response.StatusCode != System.Net.HttpStatusCode.OK &&
 				response.StatusCode != System.Net.HttpStatusCode.Accepted &&
