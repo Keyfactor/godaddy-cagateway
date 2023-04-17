@@ -38,7 +38,10 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
 			foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
-				Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
+			{
+				if (configEntry.Key != "ApiKey")
+					Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
+			}
 			ValidateParameters<object>(configProvider.CAConnectionData, _connectionKeys);
 
 			string apiUrl = configProvider.CAConnectionData["ApiUrl"].ToString();
