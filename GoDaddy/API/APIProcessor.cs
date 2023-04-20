@@ -230,6 +230,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			try
 			{
 				response = client.Execute(request);
+				if (response.ResponseStatus == ResponseStatus.TimedOut)
+				{
+					throw new GoDaddyException("Request timed out ");
+				}
 			}
 			catch (Exception ex)
 			{
