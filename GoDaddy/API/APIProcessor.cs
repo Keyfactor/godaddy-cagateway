@@ -27,10 +27,13 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private string ApiKey { get; set; }
 		private string ShopperId { get; set; }
 
-
 		private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
-        private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
-            "Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
+
+		private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
+			"Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
+
+		private int NumberOfTimeOuts = 0;
+
 
         public APIProcessor(string apiUrl, string apiKey, string shopperId)
 		{
@@ -230,13 +233,22 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			try
 			{
 				response = client.Execute(request);
+				if (response.ResponseStatus == ResponseStatus.TimedOut)
+				{
+					NumberOfTimeOuts++;
+					throw new GoDaddyException("Request timed out ");
+				}
 			}
 			catch (Exception ex)
 			{
 				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
 				Logger.Error(exceptionMessage);
-				throw new GoDaddyException(exceptionMessage);
+				if (NumberOfTimeOuts > 5)
+                    throw new Exception("Maximum timeouts of 5 exceeded.  " + exceptionMessage);
+                else
+                    throw new GoDaddyException(exceptionMessage);
 			}
+			Logger.Trace($"Response Status Code: {response.StatusCode}");
 
 			if (response.StatusCode != System.Net.HttpStatusCode.OK &&
 				response.StatusCode != System.Net.HttpStatusCode.Accepted &&
