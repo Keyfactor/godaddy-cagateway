@@ -32,7 +32,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
 			"Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
 
-		public APIProcessor(string apiUrl, string apiKey, string shopperId)
+		private int NumberOfTimeOuts = 0;
+
+
+        public APIProcessor(string apiUrl, string apiKey, string shopperId)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -232,6 +235,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				response = client.Execute(request);
 				if (response.ResponseStatus == ResponseStatus.TimedOut)
 				{
+					NumberOfTimeOuts++;
 					throw new GoDaddyException("Request timed out ");
 				}
 			}
@@ -239,7 +243,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			{
 				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
 				Logger.Error(exceptionMessage);
-				throw new GoDaddyException(exceptionMessage);
+				if (NumberOfTimeOuts > 5)
+                    throw new Exception("Maximum timeouts of 5 exceeded.  " + exceptionMessage);
+                else
+                    throw new GoDaddyException(exceptionMessage);
 			}
 			Logger.Trace($"Response Status Code: {response.StatusCode}");
 

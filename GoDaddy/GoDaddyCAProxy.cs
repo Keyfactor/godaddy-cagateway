@@ -30,8 +30,6 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 														 new string[] { "SecondsBetweenEnrollmentRetries", "int" } };
 
 
-
-
 		#region Interface Methods
 		public override void Initialize(ICAConnectorConfigProvider configProvider)
 		{
