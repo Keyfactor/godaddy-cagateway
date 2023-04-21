@@ -1,5 +1,6 @@
 v1.0.8
 - Improved logging
+- Improved error handling for API timeouts
 
 v1.0.7
 - Improved logging
