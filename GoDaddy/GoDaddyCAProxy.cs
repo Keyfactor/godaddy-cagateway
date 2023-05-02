@@ -17,21 +17,41 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 	{
 		private APIProcessor _api;
 		private string _rootType;
-		private int _syncPageSize;
-		private int _enrollmentRetries;
-		private int _secondsBetweenEnrollmentRetries;
-		private int _apiTimeoutinMilliseconds = 10000;
-		private int _numberOfCertDownloadAPIRetriesBeforeSkip = 2;
-		private int _numberOfAPITimeoutsBeforeSyncFailure = 2000;
-        private int _millisecondsBetweenCertDownloadAPICalls = 1000;
+
+		private int _syncPageSize = 50;
+		private const int SYNC_PAGE_SIZE_MIN = 10;
+        private const int SYNC_PAGE_SIZE_MAX = 1000;
+
+        private int _enrollmentRetries = 2;
+        private const int ENROLLMENT_RETRIES_MIN = 0;
+        private const int ENROLLMENT_RETRIES_MAX = 5;
+
+        private int _secondsBetweenEnrollmentRetries = 5;
+        private const int SECONDS_BETWEEN_ENROLLMENT_RETRIES_MIN = 2;
+        private const int SECONDS_BETWEEN_ENROLLMENT_RETRIES_MAX = 20;
+
+        private int _apiTimeoutInSeconds = 20;
+        private const int API_TIMEOUT_IN_SECONDS_MIN = 10;
+        private const int API_TIMEOUT_IN_SECONDS_MAX = 100;
+
+        private int _numberOfCertDownloadRetriesBeforeSkip = 2;
+        private const int NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MIN = 0;
+        private const int NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MAX = 10;
+
+        private int _numberOfTimeoutsBeforeSyncFailure = 100;
+        private const int NUMBER_OF_TIMEOUTS_BEFORE_SYNC_FAILURE_MIN = 0;
+        private const int NUMBER_OF_TIMEOUTS_BEFORE_SYNC_FAILURE_MAX = 5000;
+
+        private int _millisecondsBetweenCertDownloads = 1000;
+        private const int MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MIN = 0;
+        private const int MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MAX = 1000;
+
 
         private string[][] _connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
 														 new string[] { "ApiKey", "string" },
 														 new string[] { "ShopperId", "string" },
 														 new string[] { "RootType", "string" },
-														 new string[] { "SyncPageSize", "int" },
-														 new string[] { "EnrollmentRetries", "int" },
-														 new string[] { "SecondsBetweenEnrollmentRetries", "int" } };
+														 new string[] { "SyncPageSize", "int" } };
 
 
 		#region Interface Methods
@@ -50,6 +70,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			string apiKey = configProvider.CAConnectionData["ApiKey"].ToString();
 			string shopperId = configProvider.CAConnectionData["ShopperId"].ToString();
 			_rootType = configProvider.CAConnectionData["RootType"].ToString();
+
 			_syncPageSize = Convert.ToInt32(configProvider.CAConnectionData["SyncPageSize"]);
 			_enrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["EnrollmentRetries"]);
 			_secondsBetweenEnrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"]);
@@ -58,28 +79,49 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			bool isInt;
 			int tempInt;
 
-			if (configProvider.CAConnectionData.ContainsKey("ApiTimeoutinMilliseconds"))
+            if (configProvider.CAConnectionData.ContainsKey("SyncPageSize"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["SyncPageSize"].ToString(), out tempInt);
+                _syncPageSize = !isInt || tempInt < SYNC_PAGE_SIZE_MIN || tempInt > SYNC_PAGE_SIZE_MAX ? _syncPageSize : tempInt;
+            }
+
+            if (configProvider.CAConnectionData.ContainsKey("EnrollmentRetries"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["EnrollmentRetries"].ToString(), out tempInt);
+                _enrollmentRetries = !isInt || tempInt < ENROLLMENT_RETRIES_MIN || tempInt > ENROLLMENT_RETRIES_MAX ? _enrollmentRetries : tempInt;
+            }
+
+            if (configProvider.CAConnectionData.ContainsKey("SecondsBetweenEnrollmentRetries"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"].ToString(), out tempInt);
+                _secondsBetweenEnrollmentRetries = !isInt || tempInt < ENROLLMENT_RETRIES_MIN || tempInt > ENROLLMENT_RETRIES_MAX ? _secondsBetweenEnrollmentRetries : tempInt;
+            }
+
+            if (configProvider.CAConnectionData.ContainsKey("ApiTimeoutinSeconds"))
 			{
-				isInt = int.TryParse(configProvider.CAConnectionData["ApiTimeoutinMilliseconds"].ToString(), out tempInt);
-				_apiTimeoutinMilliseconds = !isInt || tempInt < 2000 || tempInt > 100000 ? _apiTimeoutinMilliseconds : tempInt;
+				isInt = int.TryParse(configProvider.CAConnectionData["ApiTimeoutinSeconds"].ToString(), out tempInt);
+                _apiTimeoutInSeconds = !isInt || tempInt < API_TIMEOUT_IN_SECONDS_MIN || tempInt > API_TIMEOUT_IN_SECONDS_MAX ? _apiTimeoutInSeconds : tempInt;
 			}
 
-            isInt = int.TryParse(configProvider.CAConnectionData["NumberOfCertDownloadAPIRetriesBeforeSkip"].ToString(), out tempInt);
-            _numberOfCertDownloadAPIRetriesBeforeSkip = !isInt || tempInt < 2000 || tempInt > 100000 ? _numberOfCertDownloadAPIRetriesBeforeSkip : tempInt;
+            if (configProvider.CAConnectionData.ContainsKey("NumberOfCertDownloadRetriesBeforeSkip"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["NumberOfCertDownloadRetriesBeforeSkip"].ToString(), out tempInt);
+                _numberOfCertDownloadRetriesBeforeSkip = !isInt || tempInt < NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MIN || tempInt > NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MAX ? _numberOfCertDownloadRetriesBeforeSkip : tempInt;
+            }
 
-            isInt = int.TryParse(configProvider.CAConnectionData["MillisecondsBetweenCertDownloadAPICalls"].ToString(), out tempInt);
-            _millisecondsBetweenCertDownloadAPICalls = !isInt || tempInt < 2000 || tempInt > 100000 ? _millisecondsBetweenCertDownloadAPICalls : tempInt;
+            if (configProvider.CAConnectionData.ContainsKey("NumberOfTimeoutsBeforeSyncFailure"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["NumberOfTimeoutsBeforeSyncFailure"].ToString(), out tempInt);
+                _numberOfTimeoutsBeforeSyncFailure = !isInt || tempInt < NUMBER_OF_TIMEOUTS_BEFORE_SYNC_FAILURE_MIN || tempInt > NUMBER_OF_TIMEOUTS_BEFORE_SYNC_FAILURE_MAX ? _numberOfTimeoutsBeforeSyncFailure : tempInt;
+            }
 
-            isInt = int.TryParse(configProvider.CAConnectionData["NumberOfAPITimeoutsBeforeSyncFailure"].ToString(), out tempInt);
-            _numberOfAPITimeoutsBeforeSyncFailure = !isInt || tempInt < 2000 || tempInt > 100000 ? _numberOfAPITimeoutsBeforeSyncFailurec : tempInt;
+            if (configProvider.CAConnectionData.ContainsKey("MillisecondsBetweenCertDownloads"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["MillisecondsBetweenCertDownloads"].ToString(), out tempInt);
+                _millisecondsBetweenCertDownloads = !isInt || tempInt < MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MIN || tempInt > MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MAX ? _millisecondsBetweenCertDownloads : tempInt;
+            }
 
-
-        private int  { get; set; }
-        private int  { get; set; }
-        private int  { get; set; }
-
-
-        _api = new APIProcessor(apiUrl, apiKey, shopperId);
+            _api = new APIProcessor(apiUrl, apiKey, shopperId);
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
