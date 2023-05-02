@@ -15,13 +15,17 @@
 using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAProxy.Common;using CSS.Common;using CSS.Common.Logging;using Keyfactor.PKI;using Keyfactor.PKI.PEM;using System;using System.Collections.Concurrent;using System.Collections.Generic;using System.Linq;using System.Threading;using System.Threading.Tasks;using Newtonsoft.Json;using Keyfactor.AnyGateway.GoDaddy.API;using Keyfactor.AnyGateway.GoDaddy.Models;namespace Keyfactor.AnyGateway.GoDaddy{
 	public class GoDaddyCAProxy : CAProxy.AnyGateway.BaseCAConnector
 	{
-		private APIProcessor _api { get; set; }
-		private string _rootType { get; set; }
-		private int _syncPageSize { get; set; }
-		private int _enrollmentRetries { get; set; }
-		private int _secondsBetweenEnrollmentRetries { get; set; }
+		private APIProcessor _api;
+		private string _rootType;
+		private int _syncPageSize;
+		private int _enrollmentRetries;
+		private int _secondsBetweenEnrollmentRetries;
+		private int _apiTimeoutinMilliseconds = 10000;
+		private int _numberOfCertDownloadAPIRetriesBeforeSkip = 2;
+		private int _numberOfAPITimeoutsBeforeSyncFailure = 2000;
+        private int _millisecondsBetweenCertDownloadAPICalls = 1000;
 
-		private string[][] _connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
+        private string[][] _connectionKeys = new string[][] { new string[] { "ApiUrl", "string" },
 														 new string[] { "ApiKey", "string" },
 														 new string[] { "ShopperId", "string" },
 														 new string[] { "RootType", "string" },
@@ -50,7 +54,32 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			_enrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["EnrollmentRetries"]);
 			_secondsBetweenEnrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"]);
 
-			_api = new APIProcessor(apiUrl, apiKey, shopperId);
+			//optional parameters
+			bool isInt;
+			int tempInt;
+
+			if (configProvider.CAConnectionData.ContainsKey("ApiTimeoutinMilliseconds"))
+			{
+				isInt = int.TryParse(configProvider.CAConnectionData["ApiTimeoutinMilliseconds"].ToString(), out tempInt);
+				_apiTimeoutinMilliseconds = !isInt || tempInt < 2000 || tempInt > 100000 ? _apiTimeoutinMilliseconds : tempInt;
+			}
+
+            isInt = int.TryParse(configProvider.CAConnectionData["NumberOfCertDownloadAPIRetriesBeforeSkip"].ToString(), out tempInt);
+            _numberOfCertDownloadAPIRetriesBeforeSkip = !isInt || tempInt < 2000 || tempInt > 100000 ? _numberOfCertDownloadAPIRetriesBeforeSkip : tempInt;
+
+            isInt = int.TryParse(configProvider.CAConnectionData["MillisecondsBetweenCertDownloadAPICalls"].ToString(), out tempInt);
+            _millisecondsBetweenCertDownloadAPICalls = !isInt || tempInt < 2000 || tempInt > 100000 ? _millisecondsBetweenCertDownloadAPICalls : tempInt;
+
+            isInt = int.TryParse(configProvider.CAConnectionData["NumberOfAPITimeoutsBeforeSyncFailure"].ToString(), out tempInt);
+            _numberOfAPITimeoutsBeforeSyncFailure = !isInt || tempInt < 2000 || tempInt > 100000 ? _numberOfAPITimeoutsBeforeSyncFailurec : tempInt;
+
+
+        private int  { get; set; }
+        private int  { get; set; }
+        private int  { get; set; }
+
+
+        _api = new APIProcessor(apiUrl, apiKey, shopperId);
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
@@ -93,7 +122,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			do
 			{
 				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
-				if (certificateAuthoritySyncInfo.OverallLastSync.HasValue)
+				if (!certificateAuthoritySyncInfo.DoFullSync && certificateAuthoritySyncInfo.OverallLastSync.HasValue)
 					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
 
 				foreach (CertificateDetails certificate in certificates.certificates)
