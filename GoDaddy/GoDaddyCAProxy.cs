@@ -93,6 +93,8 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			do
 			{
 				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
+				if (certificateAuthoritySyncInfo.OverallLastSync.HasValue)
+					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
 
 				foreach (CertificateDetails certificate in certificates.certificates)
 				{
