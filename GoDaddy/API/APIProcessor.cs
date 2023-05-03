@@ -115,7 +115,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			return SubmitRequest(request);
 		}
 
-		public string DownloadCertificate(string certificateId, int maxRetries)
+		public string DownloadCertificate(string certificateId, int maxRetries, out int numberOfTimeouts, out int durationInMilliseconds)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -131,7 +131,11 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			{
 				try
 				{
+					DateTime before = DateTime.Now;
 					cert = SubmitRequest(request);
+					DateTime after = DateTime.Now;
+					durationInMilliseconds = after.Subtract(before).Milliseconds;
+
 					break;
 				}
 				catch (GoDaddyTimeoutException ex)
@@ -147,6 +151,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				}
 			}
 
+			numberOfTimeouts = retries;
 			return cert;
 		}
 
