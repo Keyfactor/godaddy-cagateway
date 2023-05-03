@@ -139,7 +139,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 					retries++;
 					if (retries > maxRetries)
 					{
-						Logger.Error($"Maximum number of timeout retries of {maxRetries} exceeded for certificate {certificateId} retrieval.  Certificate skipped.");
+						Logger.Warn($"Maximum number of timeout retries of {maxRetries} exceeded for certificate {certificateId} retrieval.  Certificate skipped.");
 						throw ex;
 					}
 					else
@@ -250,7 +250,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			Logger.Trace($"Request Resource: {request.Resource}");
 			Logger.Trace($"Request Method: {request.Method.ToString()}");
 
-			IRestResponse response;
+			IRestResponse response = null;
 
 			RestClient client = new RestClient(ApiUrl);
 			client.Timeout = Timeout;
@@ -261,26 +261,28 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				response = client.Execute(request);
 				if (response.ResponseStatus == ResponseStatus.TimedOut)
 				{
-					NumberOfTimeOuts++;
-					throw new GoDaddyTimeoutException("Request timed out ");
+					string msg = "Request timed out. ";
+                    NumberOfTimeOuts++;
+
+                    if (NumberOfTimeOuts >= MaxNumberOfTimeouts)
+                    {
+                        msg += $"Maximum timeouts of {MaxNumberOfTimeouts} exceeded.  ";
+                        throw new Exception(msg);
+                    }
+                    else
+                    {
+                        Logger.Debug(msg);
+                        throw new GoDaddyTimeoutException(msg);
+                    }
 				}
 			}
+			catch (GoDaddyTimeoutException ex) { throw ex; }
 			catch (Exception ex)
 			{
 				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
 				Logger.Error(exceptionMessage);
-				if (NumberOfTimeOuts >= MaxNumberOfTimeouts)
-				{
-					string msg = $"Maximum timeouts of {MaxNumberOfTimeouts} exceeded.  " + exceptionMessage;
-					Logger.Error(msg);
-					throw new Exception(msg);
-				}
-				else
-				{
-					Logger.Debug(exceptionMessage);
-					throw new GoDaddyTimeoutException(exceptionMessage);
-				}
 			}
+
 			Logger.Trace($"Response Status Code: {response.StatusCode}");
 
 			if (response.StatusCode != System.Net.HttpStatusCode.OK &&
