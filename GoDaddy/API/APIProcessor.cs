@@ -27,8 +27,9 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private string ApiKey { get; set; }
 		private string ShopperId { get; set; }
 		private int Timeout { get; set; }
+        private int MaxNumberOfTimeouts { get; set; }
 
-		private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
+        private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
 
 		private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
 			"Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
@@ -36,7 +37,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private int NumberOfTimeOuts = 0;
 
 
-        public APIProcessor(string apiUrl, string apiKey, string shopperId, int timeout)
+        public APIProcessor(string apiUrl, string apiKey, string shopperId, int timeout, int maxNumberOfTimeouts)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -44,6 +45,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			ApiKey = apiKey;
 			ShopperId = shopperId;
 			Timeout = timeout;
+			MaxNumberOfTimeouts = maxNumberOfTimeouts;
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
@@ -113,18 +115,39 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			return SubmitRequest(request);
 		}
 
-		public string DownloadCertificate(string certificateId)
+		public string DownloadCertificate(string certificateId, int maxRetries)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-			string rtnMessage = string.Empty;
+			string cert = string.Empty;
 
 			string RESOURCE = $"v1/certificates/{certificateId}/download";
 			RestRequest request = new RestRequest(RESOURCE, Method.GET);
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-			return SubmitRequest(request);
+			int retries = 0;
+			while (true)
+			{
+				try
+				{
+					cert = SubmitRequest(request);
+					break;
+				}
+				catch (GoDaddyTimeoutException ex)
+				{
+					retries++;
+					if (retries > maxRetries)
+					{
+						Logger.Error($"Maximum number of timeout retries of {maxRetries} exceeded for certificate {certificateId} retrieval.  Certificate skipped.");
+						throw ex;
+					}
+					else
+						continue;
+				}
+			}
+
+			return cert;
 		}
 
 		public void RevokeCertificate(string certificateId, POSTCertificateRevokeRequest.REASON reason)
@@ -230,6 +253,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			IRestResponse response;
 
 			RestClient client = new RestClient(ApiUrl);
+			client.Timeout = Timeout;
 			request.AddHeader("Authorization", ApiKey);
 
 			try
@@ -238,17 +262,24 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				if (response.ResponseStatus == ResponseStatus.TimedOut)
 				{
 					NumberOfTimeOuts++;
-					throw new GoDaddyException("Request timed out ");
+					throw new GoDaddyTimeoutException("Request timed out ");
 				}
 			}
 			catch (Exception ex)
 			{
 				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
 				Logger.Error(exceptionMessage);
-				if (NumberOfTimeOuts > 5)
-                    throw new Exception("Maximum timeouts of 5 exceeded.  " + exceptionMessage);
-                else
-                    throw new GoDaddyException(exceptionMessage);
+				if (NumberOfTimeOuts >= MaxNumberOfTimeouts)
+				{
+					string msg = $"Maximum timeouts of {MaxNumberOfTimeouts} exceeded.  " + exceptionMessage;
+					Logger.Error(msg);
+					throw new Exception(msg);
+				}
+				else
+				{
+					Logger.Debug(exceptionMessage);
+					throw new GoDaddyTimeoutException(exceptionMessage);
+				}
 			}
 			Logger.Trace($"Response Status Code: {response.StatusCode}");
 
@@ -264,7 +295,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 					APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
 					errorMessage = $"{error.code}: {error.message}";
 				}
-				catch (JsonReaderException ex)
+				catch (JsonReaderException)
 				{
 					errorMessage = response.Content;
 				}

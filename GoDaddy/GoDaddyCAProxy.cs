@@ -121,7 +121,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
                 _millisecondsBetweenCertDownloads = !isInt || tempInt < MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MIN || tempInt > MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MAX ? _millisecondsBetweenCertDownloads : tempInt;
             }
 
-            _api = new APIProcessor(apiUrl, apiKey, shopperId, _apiTimeoutInSeconds * 1000);
+            _api = new APIProcessor(apiUrl, apiKey, shopperId, _apiTimeoutInSeconds * 1000, _numberOfTimeoutsBeforeSyncFailure);
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
@@ -169,10 +169,10 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
 				foreach (CertificateDetails certificate in certificates.certificates)
 				{
-					Thread.Sleep(1000);
+					Thread.Sleep(_millisecondsBetweenCertDownloads);
 					try
 					{
-						string issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId)).pems.certificate);
+						string issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate);
 						CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
 						if (!Enum.TryParse(certificate.status, out certStatus))
 							certStatus = CertificateStatusEnum.CANCELED;
@@ -292,7 +292,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 					if (certStatus == CertificateStatusEnum.ISSUED)
 						break;
 				}
-				catch (Exception exc)				{					string errMsg = $"Error retrieving certificate defails for ID {enrollmentResponse.certificateId}:\n{LogHandler.FlattenException(exc)}";					if (i + 1 < _enrollmentRetries)
+				catch (Exception exc)				{					string errMsg = $"Error retrieving certificate fails for ID {enrollmentResponse.certificateId}:\n{LogHandler.FlattenException(exc)}";					if (i + 1 < _enrollmentRetries)
 					{
 						errMsg += $"\nRetrying... (Attempt {i + 1} of {_enrollmentRetries})";
 					}					else
@@ -303,7 +303,9 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 				Thread.Sleep(_secondsBetweenEnrollmentRetries * 1000);
 			}
 
-			string pemCertificate = certStatus == CertificateStatusEnum.ISSUED ? RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(enrollmentResponse.certificateId)).pems.certificate) : string.Empty;
+			string pemCertificate = certStatus == CertificateStatusEnum.ISSUED 
+				? RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(enrollmentResponse.certificateId, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate)
+				: string.Empty;
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
@@ -328,7 +330,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			string issuedCert = string.Empty;
 			if (certStatus == CertificateStatusEnum.ISSUED || certStatus == CertificateStatusEnum.REVOKED || certStatus == CertificateStatusEnum.EXPIRED)
 			{
-				issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(caRequestID)).pems.certificate);
+				issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(caRequestID, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate);
 			}
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
