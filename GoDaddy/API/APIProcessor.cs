@@ -26,6 +26,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private string ApiUrl { get; set; }
 		private string ApiKey { get; set; }
 		private string ShopperId { get; set; }
+		private int Timeout { get; set; }
 
 		private const string NO_CERTS_PURCHASED_MESSAGE = "Failed to create certificate order";
 
@@ -35,13 +36,14 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private int NumberOfTimeOuts = 0;
 
 
-        public APIProcessor(string apiUrl, string apiKey, string shopperId)
+        public APIProcessor(string apiUrl, string apiKey, string shopperId, int timeout)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
 			ApiUrl = apiUrl;
 			ApiKey = apiKey;
 			ShopperId = shopperId;
+			Timeout = timeout;
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}

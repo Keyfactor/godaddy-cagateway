@@ -121,7 +121,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
                 _millisecondsBetweenCertDownloads = !isInt || tempInt < MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MIN || tempInt > MILLISECONDS_BETWEEN_CERT_DOWNLOADS_MAX ? _millisecondsBetweenCertDownloads : tempInt;
             }
 
-            _api = new APIProcessor(apiUrl, apiKey, shopperId);
+            _api = new APIProcessor(apiUrl, apiKey, shopperId, _apiTimeoutInSeconds * 1000);
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
