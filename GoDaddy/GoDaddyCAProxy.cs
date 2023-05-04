@@ -31,7 +31,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
         private const int SECONDS_BETWEEN_ENROLLMENT_RETRIES_MAX = 20;
 
         private int _apiTimeoutInSeconds = 20;
-        private const int API_TIMEOUT_IN_SECONDS_MIN = 10;
+        private const int API_TIMEOUT_IN_SECONDS_MIN = 2;
         private const int API_TIMEOUT_IN_SECONDS_MAX = 100;
 
         private int _numberOfCertDownloadRetriesBeforeSkip = 2;
@@ -155,8 +155,9 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 		public override void Synchronize(ICertificateDataReader certificateDataReader, BlockingCollection<CAConnectorCertificate> blockingBuffer, CertificateAuthoritySyncInfo certificateAuthoritySyncInfo, CancellationToken cancelToken)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
+            DateTime? overallLastSync = new DateTime(2020, 11, 11);
 
-			string customerId = JsonConvert.DeserializeObject<GETShopperResponse>(_api.GetCustomerId()).customerId;
+            string customerId = JsonConvert.DeserializeObject<GETShopperResponse>(_api.GetCustomerId()).customerId;
 
 			int pageNumber = 1;
 			bool wasLastPage = false;
@@ -169,9 +170,10 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
             {
 				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
 				if (!certificateAuthoritySyncInfo.DoFullSync && certificateAuthoritySyncInfo.OverallLastSync.HasValue)
-					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
+					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > overallLastSync.Value.AddDays(-1)).ToList();
+                //certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
 
-				foreach (CertificateDetails certificate in certificates.certificates)
+                foreach (CertificateDetails certificate in certificates.certificates)
 				{
                     totalNumberOfCertsFound++;
 					Thread.Sleep(_millisecondsBetweenCertDownloads);
@@ -214,11 +216,15 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			blockingBuffer.CompleteAdding();
 
 			string syncStats = "SYNC STATISTICS:" + System.Environment.NewLine;
-			syncStats += $"  Total Certificates Found: {totalNumberOfCertsFound.ToString()} + System.Environment.NewLine";
-            syncStats += $"  Total Certificates Successfully Retrived: {totalNumberOfCertsRetrieved.ToString()} + System.Environment.NewLine";
-            syncStats += $"  Total Number of GoDaddy Timeouts When Attempting to Retrieve Certificates: {totalNumberOfTimeouts.ToString()} + System.Environment.NewLine";
-            syncStats += $"  Average Time in Milliseconds For Each Successful GoDaddy Certificate Retrieval API Call: {(totalDurationApiCallsInMilliseconds/totalNumberOfCertsRetrieved).ToString()} + System.Environment.NewLine";
-            Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
+			syncStats += $"  Total Certificates Found: {totalNumberOfCertsFound.ToString()}" + System.Environment.NewLine;
+            syncStats += $"  Total Certificates Successfully Retrived: {totalNumberOfCertsRetrieved.ToString()}" + System.Environment.NewLine;
+            syncStats += $"  Total Number of GoDaddy Timeouts When Attempting to Retrieve Certificates: {totalNumberOfTimeouts.ToString()}" + System.Environment.NewLine;
+
+            int avgDurationApiCallsInMilliseconds = totalNumberOfCertsRetrieved == 0 ? 0 : (totalDurationApiCallsInMilliseconds / totalNumberOfCertsRetrieved);
+            syncStats += $"  Average Time in Milliseconds For Each Successful GoDaddy Certificate Retrieval API Call: {avgDurationApiCallsInMilliseconds.ToString()}" + System.Environment.NewLine;
+
+			Logger.Debug(syncStats);
+			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
 
 		[Obsolete]
