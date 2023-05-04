@@ -34,7 +34,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		private const string NO_CERTS_PURCHASED_REPL_MESSAGE = "Failed to create certificate order.  This error often occurs if there are no certificates purchased to fulfill this enrollment request.  " +
 			"Please check your GoDaddy account to make sure you have the correct SSL certificate product purchased to cover this enrollment.";
 
-		private int NumberOfTimeOuts = 0;
+
+		internal int TotalNumberOfTimeouts { get; set; } = 0;
+
+        internal int TotalDurationOfDownloadApiCallsInMilliseconds { get; set; } = 0;
 
 
         public APIProcessor(string apiUrl, string apiKey, string shopperId, int timeout, int maxNumberOfTimeouts)
@@ -46,6 +49,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			ShopperId = shopperId;
 			Timeout = timeout;
 			MaxNumberOfTimeouts = maxNumberOfTimeouts;
+			TotalNumberOfTimeouts = 0;
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
@@ -115,7 +119,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			return SubmitRequest(request);
 		}
 
-		public string DownloadCertificate(string certificateId, int maxRetries, out int numberOfTimeouts, out int durationInMilliseconds)
+		public string DownloadCertificate(string certificateId, int maxRetries)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -134,7 +138,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 					DateTime before = DateTime.Now;
 					cert = SubmitRequest(request);
 					DateTime after = DateTime.Now;
-					durationInMilliseconds = after.Subtract(before).Milliseconds;
+					TotalDurationOfDownloadApiCallsInMilliseconds += after.Subtract(before).Milliseconds;
 
 					break;
 				}
@@ -151,7 +155,6 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				}
 			}
 
-			numberOfTimeouts = retries;
 			return cert;
 		}
 
@@ -258,8 +261,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			IRestResponse response = null;
 
 			RestClient client = new RestClient(ApiUrl);
-			client.Timeout = Timeout;
-			request.AddHeader("Authorization", ApiKey);
+			client.Timeout = request.Resource.ToLower().Contains("download") ? 470 : 20000;
+
+			if (!request.Parameters.Exists(p => p.Name == "Authorization"))
+				request.AddHeader("Authorization", ApiKey);
 
 			try
 			{
@@ -267,12 +272,12 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				if (response.ResponseStatus == ResponseStatus.TimedOut)
 				{
 					string msg = "Request timed out. ";
-                    NumberOfTimeOuts++;
+                    TotalNumberOfTimeouts++;
 
-                    if (NumberOfTimeOuts >= MaxNumberOfTimeouts)
+                    if (TotalNumberOfTimeouts >= MaxNumberOfTimeouts)
                     {
                         msg += $"Maximum timeouts of {MaxNumberOfTimeouts} exceeded.  ";
-                        throw new Exception(msg);
+                        throw new GoDaddyMaxTimeoutException(msg);
                     }
                     else
                     {
@@ -286,6 +291,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			{
 				string exceptionMessage = GoDaddyException.FlattenExceptionMessages(ex, $"Error processing {request.Resource}").Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE);
 				Logger.Error(exceptionMessage);
+				throw ex;
 			}
 
 			Logger.Trace($"Response Status Code: {response.StatusCode}");
@@ -300,7 +306,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				try
 				{
 					APIError error = JsonConvert.DeserializeObject<APIError>(response.Content);
-					errorMessage = $"{error.code}: {error.message}";
+					if (error == null)
+						errorMessage = "No error message returned.";
+					else
+						errorMessage = $"{error.code}: {error.message}";
 				}
 				catch (JsonReaderException)
 				{

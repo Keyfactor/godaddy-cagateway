@@ -59,10 +59,11 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
+			Logger.Trace("GATEWAY CONFIG SETTINGS:");
 			foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
 			{
-				if (configEntry.Key != "ApiKey")
-					Logger.Trace($"{configEntry.Key}: {configEntry.Value}");
+				if (configEntry.Key.ToLower() != "apikey")
+					Logger.Trace($"  {configEntry.Key}: {configEntry.Value}");
 			}
 			ValidateParameters<object>(configProvider.CAConnectionData, _connectionKeys);
 
@@ -70,10 +71,6 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			string apiKey = configProvider.CAConnectionData["ApiKey"].ToString();
 			string shopperId = configProvider.CAConnectionData["ShopperId"].ToString();
 			_rootType = configProvider.CAConnectionData["RootType"].ToString();
-
-			_syncPageSize = Convert.ToInt32(configProvider.CAConnectionData["SyncPageSize"]);
-			_enrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["EnrollmentRetries"]);
-			_secondsBetweenEnrollmentRetries = Convert.ToInt32(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"]);
 
 			//optional parameters
 			bool isInt;
@@ -94,7 +91,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
             if (configProvider.CAConnectionData.ContainsKey("SecondsBetweenEnrollmentRetries"))
             {
                 isInt = int.TryParse(configProvider.CAConnectionData["SecondsBetweenEnrollmentRetries"].ToString(), out tempInt);
-                _secondsBetweenEnrollmentRetries = !isInt || tempInt < ENROLLMENT_RETRIES_MIN || tempInt > ENROLLMENT_RETRIES_MAX ? _secondsBetweenEnrollmentRetries : tempInt;
+                _secondsBetweenEnrollmentRetries = !isInt || tempInt < SECONDS_BETWEEN_ENROLLMENT_RETRIES_MIN || tempInt > SECONDS_BETWEEN_ENROLLMENT_RETRIES_MAX ? _secondsBetweenEnrollmentRetries : tempInt;
             }
 
             if (configProvider.CAConnectionData.ContainsKey("ApiTimeoutinSeconds"))
@@ -164,8 +161,8 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
 			int totalNumberOfCertsFound = 0;
             int totalNumberOfCertsRetrieved = 0;
-			int totalNumberOfTimeouts = 0;
-			int totalDurationApiCallsInMilliseconds = 0;
+			_api.TotalNumberOfTimeouts = 0;
+			_api.TotalDurationOfDownloadApiCallsInMilliseconds = 0;
             do
             {
 				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
@@ -180,9 +177,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
 					try
 					{
-						string issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId, _numberOfCertDownloadRetriesBeforeSkip, out int numberOfTimeouts, out int durationApiCallInMilliseconds)).pems.certificate);
-						totalNumberOfTimeouts += numberOfTimeouts;
-						totalDurationApiCallsInMilliseconds += durationApiCallInMilliseconds;
+						string issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(certificate.certificateId, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate);
 						
 						CertificateStatusEnum certStatus = CertificateStatusEnum.ISSUED;
 						if (!Enum.TryParse(certificate.status, out certStatus))
@@ -203,10 +198,13 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
                         totalNumberOfCertsRetrieved++;
 					}
-					catch (GoDaddyException) 
+					catch (GoDaddyMaxTimeoutException)
 					{
-                        totalNumberOfTimeouts += _numberOfCertDownloadRetriesBeforeSkip + 1;
+						Logger.Error($"Sync failed due to maximum timeouts of {_numberOfTimeoutsBeforeSyncFailure.ToString()} being reached.");
+						return;
 					}
+					catch (GoDaddyTimeoutException) { }
+					catch (Exception) { }
 				}
 
 				wasLastPage = certificates.pagination.previous == certificates.pagination.last;
@@ -218,9 +216,9 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			string syncStats = "SYNC STATISTICS:" + System.Environment.NewLine;
 			syncStats += $"  Total Certificates Found: {totalNumberOfCertsFound.ToString()}" + System.Environment.NewLine;
             syncStats += $"  Total Certificates Successfully Retrived: {totalNumberOfCertsRetrieved.ToString()}" + System.Environment.NewLine;
-            syncStats += $"  Total Number of GoDaddy Timeouts When Attempting to Retrieve Certificates: {totalNumberOfTimeouts.ToString()}" + System.Environment.NewLine;
+            syncStats += $"  Total Number of GoDaddy Timeouts When Attempting to Retrieve Certificates: {_api.TotalNumberOfTimeouts.ToString()}" + System.Environment.NewLine;
 
-            int avgDurationApiCallsInMilliseconds = totalNumberOfCertsRetrieved == 0 ? 0 : (totalDurationApiCallsInMilliseconds / totalNumberOfCertsRetrieved);
+            int avgDurationApiCallsInMilliseconds = totalNumberOfCertsRetrieved == 0 ? 0 : (_api.TotalDurationOfDownloadApiCallsInMilliseconds / totalNumberOfCertsRetrieved);
             syncStats += $"  Average Time in Milliseconds For Each Successful GoDaddy Certificate Retrieval API Call: {avgDurationApiCallsInMilliseconds.ToString()}" + System.Environment.NewLine;
 
 			Logger.Debug(syncStats);
@@ -329,7 +327,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			}
 
 			string pemCertificate = certStatus == CertificateStatusEnum.ISSUED 
-				? RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(enrollmentResponse.certificateId, _numberOfCertDownloadRetriesBeforeSkip, out int x, out int y)).pems.certificate)
+				? RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(enrollmentResponse.certificateId, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate)
 				: string.Empty;
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
@@ -355,7 +353,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			string issuedCert = string.Empty;
 			if (certStatus == CertificateStatusEnum.ISSUED || certStatus == CertificateStatusEnum.REVOKED || certStatus == CertificateStatusEnum.EXPIRED)
 			{
-				issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(caRequestID, _numberOfCertDownloadRetriesBeforeSkip, out int x, out int y)).pems.certificate);
+				issuedCert = RemovePEMHeader(JsonConvert.DeserializeObject<GETCertificateResponse>(_api.DownloadCertificate(caRequestID, _numberOfCertDownloadRetriesBeforeSkip)).pems.certificate);
 			}
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
@@ -397,11 +395,6 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
-
-
-
-
-
 
 
 		#endregion Interface Methods

@@ -16,12 +16,12 @@ using System;
 
 namespace Keyfactor.AnyGateway.GoDaddy.API
 {
-    class GoDaddyTimeoutException : GoDaddyException
+    class GoDaddyMaxTimeoutException : GoDaddyException
     {
-        public GoDaddyTimeoutException(string message) : base(message)
+        public GoDaddyMaxTimeoutException(string message) : base(message)
         { }
 
-        public GoDaddyTimeoutException(string message, Exception ex) : base(message, ex)
+        public GoDaddyMaxTimeoutException(string message, Exception ex) : base(message, ex)
         { }
     }
 }
