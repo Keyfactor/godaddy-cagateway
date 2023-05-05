@@ -1,3 +1,9 @@
+v1.1.0
+- Added partial sync functionality
+- Added four new optional settings to Gateway config - ApiTimeoutinSeconds, NumberOfCertDownloadRetriesBeforeSkip, NumberOfTimeoutsBeforeSyncFailure, MillisecondsBetweenCertDownloads
+- Added logic for certificate download retries for timeouts based on new settings above
+- Added additional sync statistics logging for each sync showing number of certificate retrievals, downloads, and any API timeout counts
+
 v1.0.8
 - Improved logging
 - Improved error handling for API timeouts
