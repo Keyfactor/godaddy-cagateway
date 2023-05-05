@@ -179,17 +179,44 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 		// One of four values based on the CA chain enrolled certificates should be validated against - GODADDY_SHA_1, GODADDY_SHA_2, 
 		//  STARTFIELD_SHA1, or STARTFIELD_SHA2
     		"RootType": "GODADDY_SHA_2",
+
+
+		// The following 7 settings are all optional.  They each have a: 1) default value, 2) minimum allowed value, and  
+		//  3) maximum allowed value.  If any value is missing or outside the min/max allowed range, the default value will be used
+
+
 		// The SyncPageSize represents the number of certificates that will be returned for each GoDaddy "get certificates" API call during a
 		//  "sync" operation.  The API call will be repeated in batches of this number until all cerificates are retrieved from the GoDady CA.
 		//  GoDaddy has no imposed limit on the number of certificates that can be returned, but due to the amount of data being returned for
 		//  each call, this number should be set to something reasonable, 50-500.
-    		"SyncPageSize": "50",
+    		"SyncPageSize": "50", //Default=50, Minimum=10, Maximum=1000
+
+
 		// EnrollmentRetries is the number of tries an Enroll operation will attempt to successfully enroll a certificate (defined as a certificate
 		//  being ISSUED or PENDING_ISSUANCE) against the GoDaddy CA before returning an error.
-    		"EnrollmentRetries": "2",
+    		"EnrollmentRetries": "2", //Default=2, Minimum=0, Maximum=5
+
+
 		// SecondsBetweenEnrollmentRetries is the amount of time an Enroll operation will wait between enrollment requests against the GoDaddy
 		//  CA if the previous attempt did not produce a certificate with a status of ISSUED or PENDING_ISSUANCE.
-    		"SecondsBetweenEnrollmentRetries": "5"
+    		"SecondsBetweenEnrollmentRetries": "5", //Default=5, Minimum=2, Maximum=20
+
+
+		// ApiTimeoutInSeconds is the amount of time in seconds that a GoDaddy API request will wait before the call times out, producing a timeout error.
+    		"ApiTimeoutInSeconds": "20", //Default=20, Minimum=2, Maximum=100
+
+
+		// NumberOfCertDownloadRetriesBeforeSkip is the number of times during a sync the retrieval of any individual certificate will be retried before 
+		//  that individual certificate is skipped if the GoDaddy API download request times out.
+    		"NumberOfCertDownloadRetriesBeforeSkip": "2", //Default=2, Minimum=0, Maximum=10
+
+
+		// MillisecondsBetweenCertDownloads is amount of time a sync operation will wait between GoDaddy API download requests.  This is necessary because 
+		//  GoDaddy places a 60 API request per minute limit on most accounts.  After that 60 limit has been reached, GoDaddy will begin returning 
+		//  TOO_MANY_REQUEST errors.  A value of "1000" (1 second between requests) is recommended, but this is configurable in case an individual account
+		//  allows a higher number of requests.
+    		"MillisecondsBetweenCertDownloads": "1000" //Default=1000, Minimum=0, Maximum=1000
+
 	},
 	/*Information to register the Gateway for client connections.*/
 	"GatewayRegistration":{
