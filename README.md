@@ -220,6 +220,11 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
     		"NumberOfCertDownloadRetriesBeforeSkip": "2", //Default=2, Minimum=0, Maximum=10
 
 
+		// NumberOfTimeoutsBeforeSyncFailure is the total number of timeouts all GoDaddy
+		//  API requests can return during a sync before the sync will fail with an error
+    		"NumberOfTimeoutsBeforeSyncFailure": "2", //Default=100, Minimum=0, Maximum=5000
+
+
 		// MillisecondsBetweenCertDownloads is the amount of time, in milliseconds a sync 
 		//  operation will wait between GoDaddy API download requests.  This is necessary 
 		//  because GoDaddy places a 60 API request per minute limit on most accounts.  
