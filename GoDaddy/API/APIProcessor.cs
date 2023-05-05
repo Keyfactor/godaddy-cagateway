@@ -261,7 +261,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			IRestResponse response = null;
 
 			RestClient client = new RestClient(ApiUrl);
-			client.Timeout = request.Resource.ToLower().Contains("download") ? 470 : 20000;
+			client.Timeout = Timeout;
 
 			if (!request.Parameters.Exists(p => p.Name == "Authorization"))
 				request.AddHeader("Authorization", ApiKey);

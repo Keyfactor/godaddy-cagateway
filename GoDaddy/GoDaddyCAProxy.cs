@@ -167,8 +167,7 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
             {
 				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
 				if (!certificateAuthoritySyncInfo.DoFullSync && certificateAuthoritySyncInfo.OverallLastSync.HasValue)
-					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > overallLastSync.Value.AddDays(-1)).ToList();
-                //certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
+					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
 
                 foreach (CertificateDetails certificate in certificates.certificates)
 				{
@@ -215,13 +214,13 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 
 			string syncStats = "SYNC STATISTICS:" + System.Environment.NewLine;
 			syncStats += $"  Total Certificates Found: {totalNumberOfCertsFound.ToString()}" + System.Environment.NewLine;
-            syncStats += $"  Total Certificates Successfully Retrived: {totalNumberOfCertsRetrieved.ToString()}" + System.Environment.NewLine;
+            syncStats += $"  Total Certificates Successfully Retrieved: {totalNumberOfCertsRetrieved.ToString()}" + System.Environment.NewLine;
             syncStats += $"  Total Number of GoDaddy Timeouts When Attempting to Retrieve Certificates: {_api.TotalNumberOfTimeouts.ToString()}" + System.Environment.NewLine;
 
             int avgDurationApiCallsInMilliseconds = totalNumberOfCertsRetrieved == 0 ? 0 : (_api.TotalDurationOfDownloadApiCallsInMilliseconds / totalNumberOfCertsRetrieved);
             syncStats += $"  Average Time in Milliseconds For Each Successful GoDaddy Certificate Retrieval API Call: {avgDurationApiCallsInMilliseconds.ToString()}" + System.Environment.NewLine;
 
-			Logger.Debug(syncStats);
+			Logger.Info(syncStats);
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 		}
 
