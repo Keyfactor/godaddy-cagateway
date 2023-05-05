@@ -28,6 +28,8 @@ To begin, you must have the AnyGateway Service installed and operational before 
 
 A production GoDaddy account must be set up that will be associated with the gateway and an API Key/Secret created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
 
+For enrollment, make sure you have pre-purchased enough certificates of the type you will be enrolling before attempting to enroll certificates via this gateway.  The gateway itself does not purchase certificates and requires that the product (certificate) be pre-purchased for the gateway to enroll it successfully.  The certificate may be purchased using any payment method including but not limited to GoDaddy's Good as Gold or in store credits, but just having these funds available is not enough.  The product MUST actually be pre-purchased using an available payment method.
+
 
 ### Installation and Configuration
 ##### Step 1 - Install the GoDaddy root and intermediate certificates.
@@ -142,27 +144,66 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 	},*/
 	/*Information necessary to authenticate to the CA.*/
 	"CAConnection":{
-		// Base URL for GoDaddy API calls.  This value should probably not need to change from what is shown below
+		// Base URL for GoDaddy API calls.  This value should probably not need to change 
+		//  from what is shown below
     		"APIUrl": "https://api.ote-godaddy.com",
-		// The ShopperId is the "Customer #" found by selecting the pulldown on the top right of the GoDaddy portal home page
-		//  after signing in using the account being used for the Gateway
+		// The ShopperId is the "Customer #" found by selecting the pulldown on the top 
+		//   right of the GoDaddy portal home page after signing in using the account 
+		//   being used for the Gateway
     		"ShopperId": "9999999999",
 		// The APIKey is the GoDaddy API Key and secret mentioned in "Prerequisites"
     		"APIKey": "sso-key {large string value API Key}:{large string value API Secret}",
-		// One of four values based on the CA chain enrolled certificates should be validated against - GODADDY_SHA_1, GODADDY_SHA_2, 
-		//  STARTFIELD_SHA1, or STARTFIELD_SHA2
+		// One of four values based on the CA chain enrolled certificates should be 
+		//  validated against - GODADDY_SHA_1, GODADDY_SHA_2, STARTFIELD_SHA1, or STARTFIELD_SHA2
     		"RootType": "GODADDY_SHA_2",
-		// The SyncPageSize represents the number of certificates that will be returned for each GoDaddy "get certificates" API call during a
-		//  "sync" operation.  The API call will be repeated in batches of this number until all cerificates are retrieved from the GoDady CA.
-		//  GoDaddy has no imposed limit on the number of certificates that can be returned, but due to the amount of data being returned for
-		//  each call, this number should be set to something reasonable, 50-500.
-    		"SyncPageSize": "50",
-		// EnrollmentRetries is the number of tries an Enroll operation will attempt to successfully enroll a certificate (defined as a certificate
-		//  being ISSUED or PENDING_ISSUANCE) against the GoDaddy CA before returning an error.
-    		"EnrollmentRetries": "2",
-		// SecondsBetweenEnrollmentRetries is the amount of time an Enroll operation will wait between enrollment requests against the GoDaddy
-		//  CA if the previous attempt did not produce a certificate with a status of ISSUED or PENDING_ISSUANCE.
-    		"SecondsBetweenEnrollmentRetries": "5"
+
+
+		// The following 7 settings are all optional.  They each have a: 1) default value,  
+		//  2) minimum allowed value, and 3) maximum allowed value.  If any value is missing 
+		//  or outside the min/max allowed range, the default value will be used
+
+
+		// The SyncPageSize represents the number of certificates that will be returned 
+		//  for each GoDaddy "get certificates" API call during a "sync" operation.  
+		//  The API call will be repeated in batches of this number until all cerificates 
+		//  are retrieved from the GoDady CA.  GoDaddy has no imposed limit on the number 
+		//  of certificates that can be returned, but due to the amount of data being returned 
+		//  for each call, this number should be set to something reasonable, 50-500.for each call.
+    		"SyncPageSize": "50", //Default=50, Minimum=10, Maximum=1000
+
+
+		// EnrollmentRetries is the number of tries an Enroll operation will attempt to successfully 
+		//  enroll a certificate (defined as a certificate being ISSUED or PENDING_ISSUANCE) 
+		//  against the GoDaddy CA before returning an error.
+    		"EnrollmentRetries": "2", //Default=2, Minimum=0, Maximum=5
+
+
+		// SecondsBetweenEnrollmentRetries is the amount of time an Enroll operation will wait 
+		//  between enrollment requests against the GoDaddy CA if the previous attempt did not 
+		//  produce a certificate with a status of ISSUED or PENDING_ISSUANCE.
+    		"SecondsBetweenEnrollmentRetries": "5", //Default=5, Minimum=2, Maximum=20
+
+
+		// ApiTimeoutInSeconds is the amount of time in seconds that a GoDaddy API request 
+		//  will wait before the call times out, producing a timeout error.
+    		"ApiTimeoutInSeconds": "20", //Default=20, Minimum=2, Maximum=100
+
+
+		// NumberOfCertDownloadRetriesBeforeSkip is the number of times during a sync the retrieval 
+		//  of any individual certificate will be retried before that individual certificate is 
+		//  skipped if the GoDaddy API download request times out.
+    		"NumberOfCertDownloadRetriesBeforeSkip": "2", //Default=2, Minimum=0, Maximum=10
+
+
+		// MillisecondsBetweenCertDownloads is the amount of time, in milliseconds a sync 
+		//  operation will wait between GoDaddy API download requests.  This is necessary 
+		//  because GoDaddy places a 60 API request per minute limit on most accounts.  
+		//  After that 60 limit has been reached, GoDaddy will begin returning 
+		//  TOO_MANY_REQUEST errors.  A value of "1000" (1 second between requests) is 
+		//  recommended, but this is configurable in case an individual account allows a 
+		//  higher number of requests.
+    		"MillisecondsBetweenCertDownloads": "1000" //Default=1000, Minimum=0, Maximum=1000
+
 	},
 	/*Information to register the Gateway for client connections.*/
 	"GatewayRegistration":{
