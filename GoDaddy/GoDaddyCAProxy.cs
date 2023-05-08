@@ -34,6 +34,10 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
         private const int API_TIMEOUT_IN_SECONDS_MIN = 2;
         private const int API_TIMEOUT_IN_SECONDS_MAX = 100;
 
+        private int _numberOfCertPageRetrievalRetriesBeforeFailure = 2;
+        private const int NUMBER_OF_CERT_PAGE_RETRIEVAL_RETRIES_BEFORE_FAILURE_MIN = 0;
+        private const int NUMBER_OF_CERT_PAGE_RETRIEVAL_RETRIES_BEFORE_FAILURE_MAX = 10;
+
         private int _numberOfCertDownloadRetriesBeforeSkip = 2;
         private const int NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MIN = 0;
         private const int NUMBER_OF_CERT_DOWNLOAD_RETRIES_BEFORE_SKIP_MAX = 10;
@@ -59,7 +63,12 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
-			Logger.Trace("GATEWAY CONFIG SETTINGS:");
+            Logger.Info($"Keyfactor Gateway Version: {System.Reflection.Assembly.GetCallingAssembly().GetName().Version.ToString()}");
+			List<System.Reflection.Assembly> assemblies = System.AppDomain.CurrentDomain.GetAssemblies().Where(p => p.FullName.ToLower().Contains("godaddy")).ToList();
+			if (assemblies.Count == 1)
+				Logger.Info($"GoDaddy Gateway Version: {assemblies[0].FullName}");
+
+            Logger.Trace("GATEWAY CONFIG SETTINGS:");
 			foreach (KeyValuePair<string, object> configEntry in configProvider.CAConnectionData)
 			{
 				if (configEntry.Key.ToLower() != "apikey")
@@ -99,6 +108,12 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 				isInt = int.TryParse(configProvider.CAConnectionData["ApiTimeoutinSeconds"].ToString(), out tempInt);
                 _apiTimeoutInSeconds = !isInt || tempInt < API_TIMEOUT_IN_SECONDS_MIN || tempInt > API_TIMEOUT_IN_SECONDS_MAX ? _apiTimeoutInSeconds : tempInt;
 			}
+
+            if (configProvider.CAConnectionData.ContainsKey("NumberOfCertPageRetrievalRetriesBeforeFailure"))
+            {
+                isInt = int.TryParse(configProvider.CAConnectionData["NumberOfCertPageRetrievalRetriesBeforeFailure"].ToString(), out tempInt);
+                _numberOfCertPageRetrievalRetriesBeforeFailure = !isInt || tempInt < NUMBER_OF_CERT_PAGE_RETRIEVAL_RETRIES_BEFORE_FAILURE_MIN || tempInt > NUMBER_OF_CERT_PAGE_RETRIEVAL_RETRIES_BEFORE_FAILURE_MAX ? _numberOfCertPageRetrievalRetriesBeforeFailure : tempInt;
+            }
 
             if (configProvider.CAConnectionData.ContainsKey("NumberOfCertDownloadRetriesBeforeSkip"))
             {
@@ -165,11 +180,23 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			_api.TotalDurationOfDownloadApiCallsInMilliseconds = 0;
             do
             {
-				GETCertificatesDetailsResponse certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize));
+				GETCertificatesDetailsResponse certificates = new GETCertificatesDetailsResponse();
+
+                try
+				{
+					certificates = JsonConvert.DeserializeObject<GETCertificatesDetailsResponse>(_api.GetCertificates(customerId, pageNumber, _syncPageSize, _numberOfCertPageRetrievalRetriesBeforeFailure));
+				}
+				catch (GoDaddyMaxTimeoutException)
+				{
+                    Logger.Error($"Sync failed due to maximum timeouts of {_numberOfCertPageRetrievalRetriesBeforeFailure.ToString()} being reached for certificate page retrieval.");
+                    return;
+                }
+                catch (GoDaddyTimeoutException) { }
+
 				if (!certificateAuthoritySyncInfo.DoFullSync && certificateAuthoritySyncInfo.OverallLastSync.HasValue)
 					certificates.certificates = certificates.certificates.Where(p => p.completedAt.HasValue && p.completedAt.Value > certificateAuthoritySyncInfo.OverallLastSync.Value.AddDays(-1)).ToList();
 
-                foreach (CertificateDetails certificate in certificates.certificates)
+				foreach (CertificateDetails certificate in certificates.certificates)
 				{
                     totalNumberOfCertsFound++;
 					Thread.Sleep(_millisecondsBetweenCertDownloads);

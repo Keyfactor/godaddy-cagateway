@@ -18,6 +18,8 @@ using Keyfactor.AnyGateway.GoDaddy.Models;
 using Newtonsoft.Json;
 using RestSharp;
 using System;
+using Org.BouncyCastle.Ocsp;
+using System.Runtime.ConstrainedExecution;
 
 namespace Keyfactor.AnyGateway.GoDaddy.API
 {
@@ -91,7 +93,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			return SubmitRequest(request);
 		}
 
-		public string GetCertificates(string customerId, int pageNumber, int pageSize)
+		public string GetCertificates(string customerId, int pageNumber, int pageSize, int maxRetries)
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 
@@ -102,7 +104,29 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 
 			Logger.MethodExit(ILogExtensions.MethodLogLevel.Debug);
 
-			return SubmitRequest(request);
+            int retries = 0;
+            while (true)
+            {
+                try
+                {
+                    rtnMessage = SubmitRequest(request);
+                    break;
+                }
+                catch (GoDaddyTimeoutException ex)
+                {
+                    retries++;
+                    if (retries > maxRetries)
+                    {
+						string msg = $"Maximum number of timeout retries of {maxRetries} exceeded for certificate page retrieval.";
+                        Logger.Error(msg);
+                        throw new GoDaddyMaxTimeoutException(msg);
+                    }
+                    else
+                        continue;
+                }
+            }
+
+            return rtnMessage;
 		}
 
 		public string GetCertificate(string certificateId)
@@ -256,6 +280,11 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 		{
 			Logger.MethodEntry(ILogExtensions.MethodLogLevel.Debug);
 			Logger.Trace($"Request Resource: {request.Resource}");
+			foreach (Parameter parameter in request.Parameters)
+			{
+				if (parameter.Name.ToLower() != "authorization")
+					Logger.Trace($"{parameter.Name}: {parameter.Value.ToString()}");
+			}
 			Logger.Trace($"Request Method: {request.Method.ToString()}");
 
 			IRestResponse response = null;
