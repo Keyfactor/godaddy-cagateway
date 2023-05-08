@@ -188,8 +188,8 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 		//  The API call will be repeated in batches of this number until all cerificates 
 		//  are retrieved from the GoDady CA.  GoDaddy has no imposed limit on the number 
 		//  of certificates that can be returned, but due to the amount of data being returned 
-		//  for each call, this number should be set to something reasonable, 50-500.for each call.
-    		"SyncPageSize": "50",
+		//  for each call, certificate data may need to be returned in batches.
+    		"SyncPageSize": "50", //Default=50, Minimum=10, Maximum=1000
 
 
 		// The following 7 settings are all optional.  They each have a: 1) default value,  
