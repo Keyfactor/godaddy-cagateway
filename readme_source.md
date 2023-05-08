@@ -189,8 +189,9 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
     		"ApiTimeoutInSeconds": "20", //Default=20, Minimum=2, Maximum=100
 
 
-		// NumberOfCertPageRetrievalRetriesBeforeFailure is the number of times during a sync the retrieval 
-		//  of an individual page of certificates will be retried after a timeout before the sync will fail
+		// NumberOfCertPageRetrievalRetriesBeforeFailure is the number of times during a sync 
+		//  the retrieval of an individual page of certificates will be retried after a 
+		//  timeout before the sync will fail
     		"NumberOfCertPageRetrievalRetriesBeforeFailure": "2", //Default=2, Minimum=0, Maximum=10
 
 
