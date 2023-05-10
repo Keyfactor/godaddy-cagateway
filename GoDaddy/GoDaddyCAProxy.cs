@@ -180,7 +180,8 @@ using CAProxy.AnyGateway.Interfaces;using CAProxy.AnyGateway.Models;using CAPr
 			_api.TotalDurationOfDownloadApiCallsInMilliseconds = 0;
             do
             {
-				GETCertificatesDetailsResponse certificates = new GETCertificatesDetailsResponse();
+                Thread.Sleep(_millisecondsBetweenCertDownloads);
+                GETCertificatesDetailsResponse certificates = new GETCertificatesDetailsResponse();
 
                 try
 				{
