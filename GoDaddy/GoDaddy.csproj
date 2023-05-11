@@ -145,6 +145,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="API\GoDaddyMaxTimeoutException.cs" />
+    <Compile Include="API\GoDaddyTimeoutException.cs" />
     <Compile Include="API\GoDaddyException.cs" />
     <Compile Include="Models\JurisdictionInfo.cs" />
     <Compile Include="Models\POSTCertificateRequest.cs" />
