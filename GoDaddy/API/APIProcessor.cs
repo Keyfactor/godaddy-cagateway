@@ -298,7 +298,10 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 			try
 			{
 				response = client.Execute(request);
-				if (response.ResponseStatus == ResponseStatus.TimedOut)
+                Logger.Trace($"Http Status Code: {response.StatusCode}");
+                Logger.Trace($"Response Status: {response.ResponseStatus}");
+
+                if (response.ResponseStatus == ResponseStatus.TimedOut || response.StatusCode == 0)
 				{
 					string msg = "Request timed out. ";
                     TotalNumberOfTimeouts++;
@@ -322,8 +325,6 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 				Logger.Error(exceptionMessage);
 				throw ex;
 			}
-
-			Logger.Trace($"Response Status Code: {response.StatusCode}");
 
 			if (response.StatusCode != System.Net.HttpStatusCode.OK &&
 				response.StatusCode != System.Net.HttpStatusCode.Accepted &&
