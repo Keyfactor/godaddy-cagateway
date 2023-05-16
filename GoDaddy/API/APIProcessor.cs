@@ -346,7 +346,7 @@ namespace Keyfactor.AnyGateway.GoDaddy.API
 					errorMessage = response.Content;
 				}
 
-				string exceptionMessage = $"Error processing {request.Resource}: {errorMessage}";
+				string exceptionMessage = $"Error processing {request.Resource}: {errorMessage.Replace(NO_CERTS_PURCHASED_MESSAGE, NO_CERTS_PURCHASED_REPL_MESSAGE)}";
 				Logger.Error(exceptionMessage);
 				throw new GoDaddyException(exceptionMessage);
 			}
