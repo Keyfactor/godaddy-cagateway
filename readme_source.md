@@ -24,7 +24,7 @@ GoDaddy supports the following certificate products:
 
 # Getting Started
 ### Prerequsites
-To begin, you must have the AnyGateway Service installed and operational before attempting to configure the GoDaddy AnyGateway plugin. **INSTALLATION INSTRUCTIONS LINK**
+To begin, you must have the AnyGateway Service installed and operational before attempting to configure the GoDaddy AnyGateway plugin.
 
 A production GoDaddy account must be set up that will be associated with the gateway and an API Key/Secret created.  For more information on how to create an API Key, follow the instructions [here](https://developer.godaddy.com/keys).
 
