@@ -297,7 +297,13 @@ For each template set up in Step 8, certain custom enrollment fields **must** be
 
   **GoDaddyUCCEVSSL:**
   - All enrollment fields for GoDaddyEVSSL **and**
-  - SlotSize (optional) - As described under GoDaddyUCCDVSSL 
+  - SlotSize (optional) - As described under GoDaddyUCCDVSSL
+
+###Troubleshooting
+
+A few common errors you may see returned from the GoDaddy API in the Keyfactor Gateway Log:
+- **Error processing v1/shoppers/7008206: ERROR_INTERNAL: Not Found : Not Found**: Shopper ID provided in the Gateway Configuration file is invalid
+- **Failed to create certificate order**: This error generally occurs if no certificates have been pre-purchased in the GoDaddy portal to cover the requested enrollment.  Please check GoDaddy, and make sure there is one or more certificates purchased of the same product type to cover the requested enrollment.
 
 
 ***
