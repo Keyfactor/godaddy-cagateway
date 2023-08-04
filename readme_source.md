@@ -146,7 +146,7 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 	"CAConnection":{
 		// Base URL for GoDaddy API calls.  This value should probably not need to change 
 		//  from what is shown below
-    		"APIUrl": "https://api.ote-godaddy.com",
+    		"APIUrl": "https://api.godaddy.com",
 		// The ShopperId is the "Customer #" found by selecting the pulldown on the top 
 		//   right of the GoDaddy portal home page after signing in using the account 
 		//   being used for the Gateway
