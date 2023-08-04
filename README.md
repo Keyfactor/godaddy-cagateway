@@ -4,9 +4,11 @@ GoDaddy is a domain registrar, web hosting company, and most relevant here, a pu
 
 #### Integration status: Production - Ready for use in production environments.
 
+
 ## About the Keyfactor AnyGateway CA Connector
 
 This repository contains an AnyGateway CA Connector, which is a plugin to the Keyfactor AnyGateway. AnyGateway CA Connectors allow Keyfactor Command to be used for inventory, issuance, and revocation of certificates from a third-party certificate authority.
+
 
 
 
@@ -171,7 +173,7 @@ After installing the Keyfactor AnyGateway service (see Prerequisites), there sho
 	"CAConnection":{
 		// Base URL for GoDaddy API calls.  This value should probably not need to change 
 		//  from what is shown below
-    		"APIUrl": "https://api.ote-godaddy.com",
+    		"APIUrl": "https://api.godaddy.com",
 		// The ShopperId is the "Customer #" found by selecting the pulldown on the top 
 		//   right of the GoDaddy portal home page after signing in using the account 
 		//   being used for the Gateway
